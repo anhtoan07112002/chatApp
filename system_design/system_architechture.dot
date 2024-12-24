@@ -1,0 +1,26 @@
+digraph {
+    A [label="Client Apps"];
+    B [label="API Gateway/Load Balancer"];
+    C [label="Authentication Service"];
+    D [label="Message Service"];
+    E [label="User Service"];
+    F [label="Presence Service"];
+    G [label="Message DB"];
+    H [label="Message Queue"];
+    I [label="User DB"];
+    J [label="Redis Cache"];
+    K [label="Push Notification Service"];
+    L [label="FCM/APNS"];
+
+    A -> B;
+    B -> C;
+    B -> D;
+    B -> E;
+    B -> F;
+    D -> G;
+    D -> H;
+    E -> I;
+    F -> J;
+    H -> K;
+    K -> L;
+}
