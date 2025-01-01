@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: chat-service
+    server:
+      port: 8080
+
+logging:
+  level:
+    root: INFO
+    com:
+      chat:
+        service:
+          controller: DEBUG
+          service: DEBUG
+          repository: DEBUG
+
+message:
+  storage:
+    path: ./messages.txt
