@@ -27,7 +27,7 @@ public class User {
     private set<GroupMemberShip> groups;
 
     /**
-     * Update profie.
+     * Update profie. thay đổi thông tin của user
      *
      * @param newUsername    the new username
      * @param newEmail       the new email
@@ -46,8 +46,8 @@ public class User {
     }
 
     /**
-     * Block user.
-     *
+     *thay đổi trạng thái của user
+     * 
      * @param userId the user id
      */
     public void markAsOnline() {

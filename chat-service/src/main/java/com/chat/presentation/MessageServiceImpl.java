@@ -1,11 +1,13 @@
 package com.chat.presentation;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
 import com.chat.domain.entity.messages.Message;
 import com.chat.domain.entity.messages.MessageContent;
+import com.chat.domain.entity.messages.MessageId;
 import com.chat.domain.entity.messages.MessageStatus;
 import com.chat.domain.entity.user.UserId;
 import com.chat.domain.repository.messageReponsitory.IMessageRepository;
@@ -25,7 +27,9 @@ public class MessageServiceImpl implements IMessageService {
 
     @Override
     public Message sendMessage(UserId senderId, UserId receiverId, MessageContent content) {
+        MessageId messageId = new MessageId(UUID.randomUUID());
         Message message = Message.builder()
+                .id(messageId)
                 .senderId(senderId)
                 .receiverId(receiverId)
                 .content(content)

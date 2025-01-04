@@ -2,10 +2,13 @@ package com.chat.domain.repository.messageReponsitory;
 
 import java.util.List;
 
+import org.springframework.stereotype.Repository;
+
 import com.chat.domain.entity.messages.Message;
 // import com.chat.domain.entity.messages.MessageId;
 import com.chat.domain.entity.user.UserId;
 
+@Repository
 public interface IMessageRepository {
     void save(Message message); // Lưu một tin nhắn
     List<Message> findBySenderId(UserId senderId); // Tìm tin nhắn theo ID người gửi

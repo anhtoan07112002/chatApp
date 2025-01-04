@@ -1,8 +1,9 @@
 spring:
   application:
     name: chat-service
-    server:
-      port: 8080
+  
+server:
+  port: 8080
 
 logging:
   level:
@@ -16,4 +17,4 @@ logging:
 
 message:
   storage:
-    path: ./messages.txt
+    path: ./messages.json 

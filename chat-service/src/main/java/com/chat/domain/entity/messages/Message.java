@@ -29,7 +29,9 @@ public class Message {
     private MessageId id;
     private UserId senderId;
     private UserId receiverId;
+    private MessageType type;
     private MessageContent content;
+    private LocalDateTime createdAt;
     private LocalDateTime sentAt;
     private MessageStatus status;
 
@@ -47,5 +49,9 @@ public class Message {
 
     public void markAsSeen() {
         this.setStatus(MessageStatus.SEEN);
+    }
+
+    public void markAsPending() {
+        this.setStatus(MessageStatus.PENDING);
     }
 }
