@@ -9,7 +9,8 @@ import org.springframework.context.annotation.ComponentScan;
     "com.chat.domain",
     "com.chat.infrastructure",
     "com.chat.application",
-    "com.chat.presentation"
+    "com.chat.presentation",
+    "com.chat.config",
 })
 public class ChatServiceApplication {
     public static void main(String[] args) {

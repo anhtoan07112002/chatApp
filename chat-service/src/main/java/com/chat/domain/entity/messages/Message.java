@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 /* 
  * 
  * Message entity
@@ -33,25 +34,42 @@ public class Message {
     private MessageContent content;
     private LocalDateTime createdAt;
     private LocalDateTime sentAt;
+    @Setter
     private MessageStatus status;
-
-    public void markAsRead() {
-        this.setStatus(MessageStatus.READED);
+    private LocalDateTime updatedAt;
+    
+        public void markAsRead() {
+            this.setStatus(MessageStatus.READED);
+        }
+    
+        public void markAsReceived() {
+            this.setStatus(MessageStatus.RECEIVED);
+        }
+    
+        public void markAsSent() {
+            this.setStatus(MessageStatus.SENT);
+        }
+    
+        public void markAsSeen() {
+            this.setStatus(MessageStatus.SEEN);
+        }
+    
+        public void markAsPending() {
+            this.setStatus(MessageStatus.PENDING);
+        }
+        
+        private Message(UserId senderId, UserId receiverId, MessageContent content, MessageType type) {
+            this.id = new MessageId(null);
+            this.senderId = senderId;
+            this.receiverId = receiverId;
+            this.content = content;
+            this.type = type;
+            this.status = MessageStatus.CREATED;
+            this.createdAt = LocalDateTime.now();
+            this.updatedAt = LocalDateTime.now();
     }
 
-    public void markAsReceived() {
-        this.setStatus(MessageStatus.RECEIVED);
-    }
-
-    public void markAsSent() {
-        this.setStatus(MessageStatus.SENT);
-    }
-
-    public void markAsSeen() {
-        this.setStatus(MessageStatus.SEEN);
-    }
-
-    public void markAsPending() {
-        this.setStatus(MessageStatus.PENDING);
+    public static Message create(UserId senderId, UserId receiverId, MessageContent content, MessageType type) {
+        return new Message(senderId, receiverId, content, type);
     }
 }

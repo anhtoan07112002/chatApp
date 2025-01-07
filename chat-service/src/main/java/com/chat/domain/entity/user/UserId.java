@@ -7,4 +7,8 @@ public record UserId(UUID value) {
             throw new IllegalArgumentException("User id cannot be null");
         }
     }
+
+    public String asString() {
+        return value.toString();
+    }
 }

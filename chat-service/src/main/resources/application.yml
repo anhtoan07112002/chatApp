@@ -1,7 +1,21 @@
 spring:
   application:
     name: chat-service
-  
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: my-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          kafka:
+            consumer:
+              auto-offset-reset: earliest
+
 server:
   port: 8080
 
@@ -17,4 +31,4 @@ logging:
 
 message:
   storage:
-    path: ./messages.json 
+    path: ./messages.json

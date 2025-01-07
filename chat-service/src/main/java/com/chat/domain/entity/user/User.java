@@ -1,7 +1,13 @@
 package com.chat.domain.entity.user;
 
+// import java.time.LocalDateTime;
+
 import com.chat.domain.entity.group.set;
 import com.chat.domain.entity.membership.GroupMemberShip;
+// import com.chat.domain.entity.messages.MessageContent;
+// import com.chat.domain.entity.messages.MessageId;
+// import com.chat.domain.entity.messages.MessageStatus;
+// import com.chat.domain.entity.messages.MessageType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -64,5 +70,18 @@ public class User {
 
     public void markAsDisturnb() {
         this.setStatus(UserStatus.DO_NOT_DISTURB);
+    }
+
+    private User(UserId id, String userName, String email, String phoneNumber) {
+        this.id = id;
+        this.userName = userName;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.status = UserStatus.OFFLINE;
+        this.groups = new set<GroupMemberShip>();
+    }
+
+    public static User create(String userName, String email, String phoneNumber) {
+        return new User(new UserId(null), userName, email, phoneNumber);
     }
 }
