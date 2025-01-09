@@ -15,7 +15,7 @@ import com.chat.domain.service.messageservice.IMessageQueueService;
 import com.chat.domain.service.messageservice.IMessageSender;
 import com.chat.domain.service.messageservice.IMessageService;
 import com.chat.domain.service.userservice.IUserService;
-import com.chat.domain.event.EventPublisher;
+import com.chat.domain.event.IEventPublisher;
 import com.chat.domain.event.messageEvent.MessageCreatedEvent;
 import com.chat.domain.event.messageEvent.MessageQueuedEvent;
 import com.chat.domain.event.messageEvent.MessageSentEvent;
@@ -39,7 +39,7 @@ public class SendMessageUseCase {
     private final IMessageSender messageSender;
     private final IUserService userService;
     private final IMessageRepository messageRepository;
-    private final EventPublisher eventPublisher;
+    private final IEventPublisher eventPublisher;
     private final IMessageQueueService messageQueueService;
 
     // private final KafkaTemplate<String, Message> kafkaTemplate;

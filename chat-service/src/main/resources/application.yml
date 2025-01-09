@@ -15,6 +15,10 @@ spring:
           kafka:
             consumer:
               auto-offset-reset: earliest
+kafka:
+  topic:
+    message: message-topic
+    offline-messages: offline-messages
 
 server:
   port: 8080
@@ -32,3 +36,7 @@ logging:
 message:
   storage:
     path: ./messages.json
+
+user:
+  storage:
+    path: ./users.json
