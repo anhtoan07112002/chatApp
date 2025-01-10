@@ -1,6 +1,7 @@
 package com.chat.domain.entity.messages;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 // import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -58,8 +59,11 @@ public class Message {
             this.setStatus(MessageStatus.PENDING);
         }
         
-        private Message(UserId senderId, UserId receiverId, MessageContent content, MessageType type) {
-            this.id = new MessageId(null);
+        private Message(MessageId id, UserId senderId, UserId receiverId, MessageContent content, MessageType type) {
+            if (id == null) {
+                throw new IllegalArgumentException("MessageId cannot be null"); // Đảm bảo id không null
+            }
+            this.id = id;
             this.senderId = senderId;
             this.receiverId = receiverId;
             this.content = content;
@@ -70,6 +74,7 @@ public class Message {
     }
 
     public static Message create(UserId senderId, UserId receiverId, MessageContent content, MessageType type) {
-        return new Message(senderId, receiverId, content, type);
+        MessageId id = new MessageId(UUID.randomUUID()); 
+        return new Message(id, senderId, receiverId, content, type);
     }
 }

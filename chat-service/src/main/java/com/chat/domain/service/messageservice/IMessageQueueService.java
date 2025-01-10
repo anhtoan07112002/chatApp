@@ -3,7 +3,7 @@ package com.chat.domain.service.messageservice;
 import java.util.List;
 
 import com.chat.domain.entity.messages.Message;
-import com.chat.domain.entity.messages.MessageStatus;
+// import com.chat.domain.entity.messages.MessageStatus;
 import com.chat.domain.entity.user.UserId;
 
 public interface IMessageQueueService {

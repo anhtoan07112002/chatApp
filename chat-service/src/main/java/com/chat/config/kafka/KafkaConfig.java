@@ -3,23 +3,21 @@ package com.chat.config.kafka;
 import com.chat.config.kafka.serializer.MessageDeserializer;
 import com.chat.config.kafka.serializer.MessageSerializer;
 import com.chat.domain.entity.messages.Message;
-// import com.chat.config.kafka.serializer.MessageSerializer;
-// import com.chat.config.kafka.serializer.MessageDeserializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
+import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerInterceptor;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
-// import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 @Configuration
@@ -45,7 +43,7 @@ public class KafkaConfig {
         configProps.put(ProducerConfig.RETRIES_CONFIG, 3);
         configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
 
-        configProps.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, ProducerInterceptor.class.getName());
+        // configProps.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, ProducerInterceptor.class.getName());
         return new DefaultKafkaProducerFactory<>(configProps);
     }
     
@@ -72,6 +70,29 @@ public class KafkaConfig {
     //     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, MessageDeserializer.class);
     //     return new DefaultKafkaConsumerFactory<>(props);
     // }
+
+    @Bean
+       public KafkaAdmin kafkaAdmin() {
+           Map<String, Object> configs = new HashMap<>();
+           configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+           return new KafkaAdmin(configs);
+       }
+
+    @Bean
+    public NewTopic messageTopic() {
+        return TopicBuilder.name("message-topic")
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic offlineMessagesTopic() {
+        return TopicBuilder.name("offline-messages")
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
 
     @Bean
     public KafkaTemplate<String, String> messageKafkaTemplate() {

@@ -1,8 +1,11 @@
 package com.chat.infrastructure.messaging;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 import com.chat.domain.entity.messages.Message;
 import com.chat.domain.entity.messages.MessageContent;
+import com.chat.domain.entity.messages.MessageId;
 import com.chat.domain.entity.messages.MessageType;
 import com.chat.domain.entity.user.UserId;
 import com.chat.domain.repository.messageReponsitory.IMessageRepository;

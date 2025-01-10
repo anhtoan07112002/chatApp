@@ -1,0 +1,14 @@
+[
+    {
+        "id": {"value": "a6c4f7c4-4a4f-4a4f-4a4f-4a4f4a4f4a4f"},
+        "name": "A", 
+        "email": "sender@example.com",
+        "password": "senderPassword"
+    },
+    {
+        "id": {"value": "e5f6d7c5-4a4f-4a4f-4a4f-4a4f4a4f4a4f"},
+        "name": "B",
+        "email": "receiver@example.com", 
+        "password": "receiverPassword"
+    }
+]

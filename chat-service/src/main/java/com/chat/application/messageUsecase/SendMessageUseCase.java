@@ -1,16 +1,12 @@
 package com.chat.application.messageUsecase;
 
-// import org.springframework.context.ApplicationEventPublisher;
-// import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-
 import com.chat.application.DTO.SendMessageInput;
 import com.chat.domain.entity.messages.Message;
 import com.chat.domain.entity.messages.MessageContent;
 import com.chat.domain.entity.messages.MessageStatus;
 import com.chat.domain.entity.messages.MessageType;
 import com.chat.domain.entity.user.User;
-// import com.chat.domain.entity.user.UserId;
 import com.chat.domain.service.messageservice.IMessageQueueService;
 import com.chat.domain.service.messageservice.IMessageSender;
 import com.chat.domain.service.messageservice.IMessageService;
@@ -22,13 +18,9 @@ import com.chat.domain.event.messageEvent.MessageSentEvent;
 import com.chat.domain.repository.messageReponsitory.IMessageRepository;
 import com.chat.domain.exception.userException.UserNotFoundException;
 import com.chat.domain.exception.messageException.MessageProcessingException;
-// import com.chat.domain.exception.messageException.InvalidMessageException;
 
 import lombok.AllArgsConstructor;
-// import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-// import lombok.Data;
-// import lombok.Builder;
 
 
 @Service
@@ -70,7 +62,7 @@ public class SendMessageUseCase {
             eventPublisher.publishMessageCreatedEvent(new MessageCreatedEvent(message));
 
             // Handle delivery based on receiver's status
-            if (userService.isOnline(receiver.getId())) {
+            if (userService.isOnline(receiver.getId().asString())) {
                 handleOnlineDelivery(message);
             } else {
                 handleOfflineDelivery(message);

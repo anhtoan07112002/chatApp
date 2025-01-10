@@ -1,5 +1,6 @@
 package com.chat.infrastructure.messaging;
 
+
 import org.springframework.stereotype.Component;
 
 import com.chat.domain.entity.messages.Message;
@@ -27,7 +28,7 @@ public class MessageListenerImpl implements IMessageListener {
             log.info("Received message: {}", message.getId());
             
             // Kiểm tra trạng thái người nhận
-            if (userService.isOnline(message.getReceiverId())) {
+            if (userService.isOnline(message.getReceiverId().toString())) {
                 // Nếu online thì gửi tin nhắn
                 messageSender.sendMessage(message);
                 message.setStatus(MessageStatus.SENT);

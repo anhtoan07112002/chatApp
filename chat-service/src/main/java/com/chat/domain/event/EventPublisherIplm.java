@@ -21,7 +21,6 @@ public class EventPublisherIplm implements IEventPublisher {
 
     @Override
     public void publishMessageSentEvent(MessageSentEvent event) {
-        // TODO Auto-generated method stub
         applicationEventPublisher.publishEvent(event);
         log.info("Message sent successfully: {}", event.getMessage());
         // throw new UnsupportedOperationException("Unimplemented method 'publishMessageSentEvent'");
@@ -29,7 +28,6 @@ public class EventPublisherIplm implements IEventPublisher {
 
     @Override
     public void publishMessageQueuedEvent(MessageQueuedEvent event) {
-        // TODO Auto-generated method stub
         applicationEventPublisher.publishEvent(event);
         log.info("Message queued successfully: {}", event.getMessage());
         // throw new UnsupportedOperationException("Unimplemented method 'publishMessageQueuedEvent'");
@@ -37,7 +35,6 @@ public class EventPublisherIplm implements IEventPublisher {
 
     @Override
     public void publishMessageCreatedEvent(MessageCreatedEvent event) {
-        // TODO Auto-generated method stub
         applicationEventPublisher.publishEvent(event);
         log.info("Message created successfully: {}", event.getMessage());
         // throw new UnsupportedOperationException("Unimplemented method 'publishMessageCreatedEvent'");

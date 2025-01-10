@@ -39,7 +39,6 @@ public class KafkaMessageQueueService implements IMessageQueueService {
             message.setStatus(MessageStatus.PENDING);
             messageRepository.save(message);
         } catch (Exception e) {
-            // TODO: handle exception
             log.error("Error serializing message: {}", e.getMessage(), e);
             throw new MessagePublishException("Error serializing message", e);
         }
@@ -60,7 +59,6 @@ public class KafkaMessageQueueService implements IMessageQueueService {
                 updateMessageStatus(message, MessageStatus.SENT);
             }
         } catch (Exception e) {
-            // TODO: handle exception
             log.error("Error serializing message: {}", e.getMessage(), e);
             throw new MessagePublishException("Error serializing message", e);
         }

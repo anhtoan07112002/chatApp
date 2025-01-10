@@ -8,6 +8,14 @@ public record UserId(UUID value) {
         }
     }
 
+    public static UserId generate() {
+        return new UserId(UUID.randomUUID());
+    }
+
+    public static UserId fromString(String value) {
+        return new UserId(UUID.fromString(value));
+    }
+
     public String asString() {
         return value.toString();
     }
