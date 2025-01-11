@@ -24,14 +24,12 @@ public class UserServiceImpl implements IUserService{
 
     @Override
     public User getUserById(String id) {
-        // TODO Auto-generated method stub
         UUID userId = UUID.fromString(id);
         return userRepository.findById(userId);
     }
 
     @Override
     public boolean isOnline(String id) {
-        // TODO Auto-generated method stub
         return sessionManager.isUserOnline(id);
     }
 }

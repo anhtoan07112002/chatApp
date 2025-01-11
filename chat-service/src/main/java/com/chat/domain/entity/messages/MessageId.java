@@ -7,5 +7,5 @@ public record MessageId(UUID vaUuid) {
         if (vaUuid == null) {
             throw new IllegalArgumentException("MessageId cannot be null");
         }
-    }       
+    }     
 }

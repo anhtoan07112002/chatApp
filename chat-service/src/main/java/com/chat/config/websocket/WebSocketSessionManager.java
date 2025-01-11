@@ -4,20 +4,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.WebSocketSession;
+// import org.springframework.web.socket.WebSocketSession;
 
 import com.chat.domain.entity.user.UserId;
 
 
 @Component
 public class WebSocketSessionManager {
-    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+    private final Map<String, String> sessions = new ConcurrentHashMap<>();
 
-    public void addSession(UserId userId, WebSocketSession session) {
+    public String getSession(UserId userId) {
+        return sessions.get(userId.asString());
+    }
+
+    public void addSession(UserId userId, String session) {
         sessions.put(userId.asString(), session);
     }
 
-    public void removeSession(String userId) {
+    public void removeSession(UserId userId) {
         sessions.remove(userId);
     }
 

@@ -1,57 +1,101 @@
 package com.chat.config.websocket;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.WebSocketSession;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
+import com.chat.application.messageUsecase.MessageDeliveryCoordinator;
 import com.chat.domain.entity.user.UserId;
-import com.chat.domain.service.messageservice.IMessageQueueService;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @EnableWebSocketMessageBroker
+@Slf4j
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketSessionManager sessionManager;
-    private final IMessageQueueService messageQueueService; // Thêm service để gửi lại tin nhắn
+    @Lazy private final MessageDeliveryCoordinator deliveryCoordinator;
+    private final WebSocketHandshakeInterceptor WebsocketHandshakeInterceptor;
 
 
-    public WebSocketConfig(WebSocketSessionManager sessionManager, IMessageQueueService messageQueueService) {
+    public WebSocketConfig(WebSocketSessionManager sessionManager, MessageDeliveryCoordinator messageDeliveryCoordinator, WebSocketHandshakeInterceptor Web) {
         this.sessionManager = sessionManager;
-        this.messageQueueService = messageQueueService;
+        this.deliveryCoordinator = messageDeliveryCoordinator;
+        this.WebsocketHandshakeInterceptor = Web;   
     }
 
     @Override
     public void registerStompEndpoints(@SuppressWarnings("null") StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
+            //    .setAllowedOrigins("http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:63342")
+            //    .setAllowedOriginPatterns("*")
                .setAllowedOrigins("*")
-               .withSockJS();
+               .addInterceptors(WebsocketHandshakeInterceptor)  // Add interceptor 
+               .withSockJS()
+               .setClientLibraryUrl("https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js")
+               .setWebSocketEnabled(true);
+            //    .setSupportsJsonp(false);
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.setApplicationDestinationPrefixes("/app");
         registry.enableSimpleBroker("/topic", "/queue");
+        registry.setUserDestinationPrefix("/user");
     }
-
+    
     @EventListener
     public void handleWebSocketConnect(SessionConnectedEvent event) {
-        WebSocketSession session = event.getMessage().getHeaders().get("simpSessionId", WebSocketSession.class);
-        UserId userId = (UserId) session.getAttributes().get("userId"); // Giả sử bạn đã lưu userId trong session attributes
-        sessionManager.addSession(userId, session);
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        String sessionId = accessor.getSessionId();
+        UserId userId = (UserId) accessor.getSessionAttributes().get("userId");
+        
+        log.info("User connected - Session ID: {}, User ID: {}", sessionId, userId);
 
-        messageQueueService.sendPendingMessages(userId);
+        if (userId != null) {
+            sessionManager.addSession(userId, sessionId);
+            // Attempt to deliver pending messages when user connects
+            deliveryCoordinator.deliverPendingMessage(userId);
+        }
     }
+
+    // @EventListener
+    // public void handleWebSocketConnect(SessionConnectedEvent event) {
+    //     WebSocketSession session = event.getMessage().getHeaders().get("simpSessionId", WebSocketSession.class);
+    //     UserId userId = (UserId) session.getAttributes().get("userId"); // Giả sử bạn đã lưu userId trong session attributes
+    //     sessionManager.addSession(userId, session);
+
+    //     if (userId != null) {
+    //         sessionManager.addSession(userId, session);
+    //         messageQueueService.sendPendingMessages(userId);
+    //     }
+    // }
+
+    // @EventListener
+    // public void handleWebSocketDisconnect(SessionDisconnectEvent event) {
+    //     WebSocketSession session = event.getMessage().getHeaders().get("simpSessionId", WebSocketSession.class);
+    //     UserId userId = (UserId) session.getAttributes().get("userId");
+    //     if (userId != null) {
+    //         sessionManager.removeSession(userId);
+    //     }
+    // }
 
     @EventListener
     public void handleWebSocketDisconnect(SessionDisconnectEvent event) {
-        String userId = (String) event.getSessionId(); // Lấy userId từ sessionId
-        sessionManager.removeSession(userId);
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        // String sessionId = accessor.getSessionId();
+        UserId userId = (UserId) accessor.getSessionAttributes().get("userId");
+        if (userId != null) {
+            sessionManager.removeSession(userId);
+        }
     }
 }
 
