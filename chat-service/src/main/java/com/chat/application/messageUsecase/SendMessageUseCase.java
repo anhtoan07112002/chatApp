@@ -2,6 +2,7 @@ package com.chat.application.messageUsecase;
 
 // import org.springframework.context.ApplicationEventPublisher;
 // import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.stereotype.Service;
 
 import com.chat.application.DTO.SendMessageInput;
@@ -27,6 +28,7 @@ import com.chat.domain.exception.messageException.MessageProcessingException;
 import lombok.AllArgsConstructor;
 // import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+
 // import lombok.Data;
 // import lombok.Builder;
 
@@ -45,7 +47,7 @@ public class SendMessageUseCase {
     // private final KafkaTemplate<String, Message> kafkaTemplate;
 
     private static final int MAX_RETRY_ATTEMPTS = 3;
-    private static final long RETRY_DELAY_MS = 1000;
+    private static final long RETRY_DELAY_MS = 1;
 
     public void execute(SendMessageInput input) {
         try {
@@ -84,34 +86,59 @@ public class SendMessageUseCase {
 
     private void handleOnlineDelivery(Message message) {
         int retryCount = 0;
-        Exception lastException = null;
+        long retryDelay = RETRY_DELAY_MS;
+        String messageId = message.getId().toString();
+        String recipientId = message.getReceiverId().toString();
+
+        log.info("Starting online delivery for message: {} to recipient: {}", messageId, recipientId);
 
         while (retryCount < MAX_RETRY_ATTEMPTS) {
             try {
+                log.debug("Attempt {} - Sending message to recipient. Delay: {}ms", retryCount + 1, retryDelay);
+                long startTime = System.currentTimeMillis();
+
                 messageSender.sendMessage(message);
+
+                long deliveryTime = System.currentTimeMillis() - startTime;
+                log.info("Message {} successfully sent to recipient {} in {}ms", messageId, recipientId, deliveryTime);
+
                 updateMessageStatus(message, MessageStatus.SENT);
+                log.debug("Updated message status to SENT in database");
+
                 eventPublisher.publishMessageSentEvent(new MessageSentEvent(message));
+                log.debug("Published MessageSentEvent for message: {}", messageId);
+
                 return;
-            } catch (Exception e) {
-                lastException = e;
+            } catch (MessageDeliveryException e) {
                 retryCount++;
-                log.warn("Attempt {} failed to send message: {}", retryCount, e.getMessage());
-                
+                log.warn("Attempt {} failed to send message: {} - Error: {} - Stack trace: {}",
+                        retryCount,
+                        messageId,
+                        e.getMessage(),
+                        e.getStackTrace().length > 0 ? e.getStackTrace()[0] : "No stack trace");
+
                 if (retryCount < MAX_RETRY_ATTEMPTS) {
                     try {
-                        Thread.sleep(RETRY_DELAY_MS * retryCount);
+                        log.debug("Implementing exponential backoff - Waiting {}ms before retry", retryDelay);
+                        Thread.sleep(retryDelay);
+                        retryDelay *= 2; // Exponential backoff
                     } catch (InterruptedException ie) {
+                        log.error("Thread interrupted during retry delay for message: {}", messageId, ie);
                         Thread.currentThread().interrupt();
                         break;
                     }
-                } else {
-                    log.error("Failed to send message after {} attempts", MAX_RETRY_ATTEMPTS, lastException);
-                    handleOfflineDelivery(message);
                 }
             }
         }
 
-        
+        log.error("Message delivery failed - MessageId: {}, Recipient: {}, Attempts: {}, Total time: {}ms",
+                messageId,
+                recipientId,
+                MAX_RETRY_ATTEMPTS,
+                retryDelay - RETRY_DELAY_MS); // Calculate total time based on accumulated delay
+
+        log.info("Switching to offline delivery mode for message: {}", messageId);
+        handleOfflineDelivery(message);
     }
 
     private void handleOfflineDelivery(Message message) {

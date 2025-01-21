@@ -26,44 +26,74 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
     }
 
     @Override
-    public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
-            WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
-        // Extract token from request headers or parameters
+    public boolean beforeHandshake(ServerHttpRequest request,
+                                   ServerHttpResponse response,
+                                   WebSocketHandler wsHandler,
+                                   Map<String, Object> attributes) throws Exception {
         String userIdStr = extractUserId(request);
         log.debug("Attempting handshake with userId: {}", userIdStr);
-        if (userIdStr != null) {
-            User user = userRepository.findById(UUID.fromString(userIdStr));
-            if (user != null) {
-                attributes.put("userId", UserId.fromString(userIdStr));
-                log.debug("Successfully added userId to attributes: {}", userIdStr);
-                return true;
-            }
+
+        if (userIdStr == null) {
+            log.error("No userId provided in request");
+            return false;
         }
-        log.debug("Handshake failed for userId: {}", userIdStr);
-        return false;
+
+        try {
+            UUID uuid = UUID.fromString(userIdStr);
+            User user = userRepository.findById(uuid);
+
+            if (user == null) {
+                log.error("User not found for userId: {}", userIdStr);
+                return false;
+            }
+
+            // Set both the UserId object and the string representation
+            UserId userId = UserId.fromString(userIdStr);
+            attributes.put("userId", userId);
+            attributes.put("userIdString", userIdStr);
+
+            // Store additional user information if needed
+            attributes.put("userAuthenticated", true);
+
+            log.debug("Successfully added userId to attributes: {}", userIdStr);
+            return true;
+
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid UUID format for userId: {}", userIdStr);
+            return false;
+        } catch (Exception e) {
+            log.error("Error during handshake for userId: {}", userIdStr, e);
+            return false;
+        }
     }
 
     @Override
-    public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
-            WebSocketHandler wsHandler, Exception exception) {
-        // No implementation needed
+    public void afterHandshake(ServerHttpRequest request,
+                               ServerHttpResponse response,
+                               WebSocketHandler wsHandler,
+                               Exception exception) {
+        // Add any post-handshake logging if needed
+        if (exception != null) {
+            log.error("Exception occurred during handshake", exception);
+        }
     }
 
     private String extractUserId(ServerHttpRequest request) {
-        // Lấy userId từ query parameter
         String query = request.getURI().getQuery();
         if (query != null && query.contains("userId=")) {
-            log.debug("Extracted userId: {}", query.split("userId=")[1].split("&")[0]);
-            return query.split("userId=")[1].split("&")[0];
-        }
-        
-        // Hoặc từ header
-        List<String> userIdHeader = request.getHeaders().get("X-User-Id");
-        if (userIdHeader != null && !userIdHeader.isEmpty()) {
-            log.debug("Extracted userId: {}", userIdHeader.get(0));
-            return userIdHeader.get(0);
+            String userIdFromQuery = query.split("userId=")[1].split("&")[0];
+            log.debug("Extracted userId from query: {}", userIdFromQuery);
+            return userIdFromQuery;
         }
 
+        List<String> userIdHeader = request.getHeaders().get("X-User-Id");
+        if (userIdHeader != null && !userIdHeader.isEmpty()) {
+            String userIdFromHeader = userIdHeader.get(0);
+            log.debug("Extracted userId from header: {}", userIdFromHeader);
+            return userIdFromHeader;
+        }
+
+        log.debug("No userId found in request");
         return null;
     }
 }
