@@ -7,6 +7,8 @@ import java.util.UUID;
 
 import com.chat.domain.entity.user.UserId;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -72,6 +74,17 @@ public class Message {
             this.createdAt = LocalDateTime.now();
             this.updatedAt = LocalDateTime.now();
     }
+
+    @JsonCreator
+    public Message(@JsonProperty("senderId") String senderId,
+                   @JsonProperty("receiverId") String receiverId,
+                   @JsonProperty("content") String content) {
+        this.id = new MessageId(UUID.randomUUID());
+        this.senderId = UserId.fromString(senderId);
+        this.receiverId = UserId.fromString(receiverId);
+        this.content = new MessageContent(content);
+    }
+
 
     public static Message create(UserId senderId, UserId receiverId, MessageContent content, MessageType type) {
         MessageId id = new MessageId(UUID.randomUUID()); 

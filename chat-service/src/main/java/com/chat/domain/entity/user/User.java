@@ -51,11 +51,6 @@ public class User {
         }
     }
 
-    /**
-     *thay đổi trạng thái của user
-     * 
-     * @param userId the user id
-     */
     public void markAsOnline() {
         this.setStatus(UserStatus.ONLINE);
     }

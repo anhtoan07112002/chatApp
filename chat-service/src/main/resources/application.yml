@@ -25,6 +25,8 @@ server:
 
 logging:
   level:
+    org.springframework.web.socket: DEBUG
+    com.chat.config.websocket: DEBUG
     root: INFO
     com:
       chat:
