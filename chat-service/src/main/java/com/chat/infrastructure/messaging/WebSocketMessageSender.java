@@ -37,7 +37,7 @@ public class WebSocketMessageSender implements IMessageSender {
     @Override
     public void sendMessage(Message message) {
         String receiverId = message.getReceiverId().asString();
-        String messageId = message.getId().toString();
+        String messageId = message.getId().vaUuid().toString();
         String senderId = message.getSenderId().asString();
 
         log.info("Attempting to send message: [ID: {}, From: {}, To: {}]",
@@ -117,9 +117,13 @@ public class WebSocketMessageSender implements IMessageSender {
     }
 
     public void handleAcknowledgment(String messageId) {
+        log.debug("Processing acknowledgment for message: {}", messageId);
         CompletableFuture<Void> future = acknowledgmentMap.get(messageId);
         if (future != null) {
+            log.debug("Found acknowledgment future for message: {}", messageId);
             future.complete(null);
+        } else {
+            log.warn("No acknowledgment future found for message: {}", messageId);
         }
     }
 }

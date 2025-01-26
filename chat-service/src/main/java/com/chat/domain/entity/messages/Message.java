@@ -76,15 +76,20 @@ public class Message {
     }
 
     @JsonCreator
-    public Message(@JsonProperty("senderId") String senderId,
-                   @JsonProperty("receiverId") String receiverId,
-                   @JsonProperty("content") String content) {
+    public Message(
+            @JsonProperty("type") String type,
+            @JsonProperty("senderId") String senderId,
+            @JsonProperty("receiverId") String receiverId,
+            @JsonProperty("content") MessageContent content) {
         this.id = new MessageId(UUID.randomUUID());
+        this.type = MessageType.valueOf(type);
         this.senderId = UserId.fromString(senderId);
         this.receiverId = UserId.fromString(receiverId);
-        this.content = new MessageContent(content);
+        this.content = content;
+        this.status = MessageStatus.CREATED;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
-
 
     public static Message create(UserId senderId, UserId receiverId, MessageContent content, MessageType type) {
         MessageId id = new MessageId(UUID.randomUUID()); 

@@ -60,6 +60,7 @@ public class WebSocketController {
 
     @MessageMapping("/chat.ack")
     public void handleAcknowledgment(@Payload MessageAck ack) {
+        log.debug("Received acknowledgment for message: {}", ack.getMessageId());
         webSocketMessageSender.handleAcknowledgment(ack.getMessageId());
     }
 }
