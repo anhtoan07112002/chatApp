@@ -6,6 +6,6 @@ import com.chat.domain.entity.messages.MessageType;
 import com.chat.domain.entity.user.UserId;
 
 public interface IMessageService {
-    Message createMessage(UserId senderId, UserId receiverId, MessageContent content, MessageType type); // Create a message
+    Message createMessage(String type, String senderId, String receiverId, MessageContent content); // Create a message
     void save(Message message);
 }

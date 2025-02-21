@@ -1,8 +1,14 @@
 package com.chat.application.messageUsecase;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import com.chat.application.DTO.MessageResponse;
+import com.chat.domain.event.IEventPublisher;
+import com.chat.domain.event.messageEvent.MessageSentEvent;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -19,55 +25,40 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MessageDeliveryCoordinator {
     private final WebSocketSessionManager sessionManager;
-    private final IMessageRepository messageRepository;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final ObjectProvider<IMessageRepository> messageRepositoryProvider;
+    private final ObjectProvider<SimpMessagingTemplate> messagingTemplateProvider;
+    private final IEventPublisher eventPublisher;
+    private final KafkaTemplate<String, Message> kafkaTemplate;
 
     public MessageDeliveryCoordinator(
             WebSocketSessionManager sessionManager,
-            IMessageRepository messageRepository,
-            @Lazy SimpMessagingTemplate messagingTemplate) {
+            ObjectProvider<IMessageRepository> messageRepositoryProvider,
+            ObjectProvider<SimpMessagingTemplate> messagingTemplateProvider,
+            IEventPublisher eventPublisher,
+            KafkaTemplate<String, Message> kafkaTemplate) {
         this.sessionManager = sessionManager;
-        this.messageRepository = messageRepository;
-        this.messagingTemplate = messagingTemplate;
+        this.messageRepositoryProvider = messageRepositoryProvider;
+        this.messagingTemplateProvider = messagingTemplateProvider;
+        this.eventPublisher = eventPublisher;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
-    // In MessageDeliveryCoordinator.java
-    public void sendMessage(Message message) {
-        if (message == null || message.getReceiverId() == null) {
-            log.error("Cannot send null message or message with null receiverId");
-            throw new MessageDeliveryException("Invalid message or receiver");
-        }
-
-        String receiverId = message.getReceiverId().asString();
-
-        if (!sessionManager.isUserOnline(receiverId)) {
-            log.debug("User {} is not online, message will be queued", receiverId);
-            throw new MessageDeliveryException("User is offline");
-        }
-
-        try {
-            log.debug("Attempting to send message {} to user {}", message.getId(), receiverId);
-            messagingTemplate.convertAndSendToUser(
-                    receiverId,
-                    "/queue/messages",
-                    message
-            );
-            log.debug("Successfully sent message {} to user {}", message.getId(), receiverId);
-        } catch (Exception e) {
-            log.error("Failed to send message {} to user {}: {}", message.getId(), receiverId, e.getMessage());
-            throw new MessageDeliveryException("Failed to send message: " + e.getMessage());
-        }
-    }
-
-    public void deliverPendingMessage(UserId userId) {
+    public void deliverPendingMessages(UserId userId) {
         if (userId == null) {
             log.error("Cannot deliver messages for null userId");
             return;
         }
 
-        String sessionId = sessionManager.getSession(userId);
-        if (sessionId == null) {
-            log.debug("No active session found for userId: {}", userId);
+        IMessageRepository messageRepository = messageRepositoryProvider.getIfAvailable();
+        SimpMessagingTemplate messagingTemplate = messagingTemplateProvider.getIfAvailable();
+
+        if (messageRepository == null || messagingTemplate == null) {
+            log.error("Required dependencies not available");
+            return;
+        }
+
+        if (!sessionManager.isUserOnline(userId.asString())) {
+            log.debug("User {} is not online, skipping pending message delivery", userId);
             return;
         }
 
@@ -76,30 +67,97 @@ public class MessageDeliveryCoordinator {
 
         for (Message message : pendingMessages) {
             try {
-                if (!sessionManager.isUserOnline(userId.asString())) {
-                    log.debug("User {} went offline during message delivery", userId);
-                    break;
-                }
+                log.debug("Attempting to deliver pending message: {}", message.getId());
+
+                MessageResponse response = MessageResponse.builder()
+                        .id(MessageResponse.MessageId.builder()
+                                .vaUuid(message.getId().vaUuid().toString())
+                                .build())
+                        .senderId(message.getSenderId().asString())
+                        .receiverId(message.getReceiverId().asString())
+                        .content(message.getContent().getContent())
+                        .status(MessageStatus.SENT.name())
+                        .timestamp(LocalDateTime.now().toString())
+                        .build();
+                // Gửi tin nhắn qua WebSocket
+
+                log.debug("Sending WebSocket message: {}", response);
 
                 messagingTemplate.convertAndSendToUser(
-                        message.getReceiverId().asString(),
+                        userId.asString(),
                         "/queue/messages",
-                        message
+                        response
                 );
 
                 message.setStatus(MessageStatus.SENT);
+                message.setSentAt(LocalDateTime.now());
                 messageRepository.save(message);
-                log.debug("Successfully delivered message {} to user {}", message.getId(), userId);
-            } catch (IllegalStateException e) {
-                log.warn("Session closed while sending message {} to user {}", message.getId(), userId);
-                // Don't update message status - it will remain pending
-                break;
+
+                eventPublisher.publishMessageSentEvent(new MessageSentEvent(message));
+
+                kafkaTemplate.send("message-topic", message.getId().vaUuid().toString(), message)
+                        .whenComplete((result, ex) -> {
+                            if (ex != null) {
+                                log.error("Failed to update message status in Kafka: {}", ex.getMessage());
+                            } else {
+                                log.debug("Message status updated in Kafka for message: {}", message.getId());
+                            }
+                        });
+                log.debug("Successfully delivered pending message {} to user {}", message.getId(), userId);
+
             } catch (Exception e) {
                 log.error("Failed to send pending message {} to user {}: {}",
                         message.getId(), userId, e.getMessage());
-                message.setStatus(MessageStatus.FAILED);
-                messageRepository.save(message);
             }
+        }
+    }
+
+    public void sendMessage(Message message) {
+        if (message == null || message.getReceiverId() == null) {
+            log.error("Cannot send null message or message with null receiverId");
+            throw new MessageDeliveryException("Invalid message or receiver");
+        }
+
+        String receiverId = message.getReceiverId().asString();
+        SimpMessagingTemplate messagingTemplate = messagingTemplateProvider.getIfAvailable();
+
+        if (messagingTemplate == null) {
+            throw new MessageDeliveryException("Messaging template not available");
+        }
+
+        if (!sessionManager.isUserOnline(receiverId)) {
+            log.debug("User {} is not online, message will be queued", receiverId);
+            message.setStatus(MessageStatus.PENDING);
+            throw new MessageDeliveryException("User is offline");
+        }
+
+        try {
+            log.debug("Attempting to send message {} to user {}", message.getId(), receiverId);
+
+            MessageResponse response = MessageResponse.builder()
+                    .id(MessageResponse.MessageId.builder().vaUuid(message.getId().vaUuid().toString()).build())
+                    .senderId(message.getSenderId().asString())
+                    .receiverId(message.getReceiverId().asString())
+                    .content(message.getContent().getContent())
+                    .status(message.getStatus().name())
+                    .timestamp(LocalDateTime.now().toString())
+                    .build();
+
+            messagingTemplate.convertAndSendToUser(
+                    receiverId,
+                    "/queue/messages",
+                    response
+            );
+
+            message.setStatus(MessageStatus.SENT);
+            message.setSentAt(LocalDateTime.now());
+
+            log.debug("Successfully sent message {} to user {}", message.getId(), receiverId);
+        } catch (Exception e) {
+            log.error("Failed to send message {} to user {}: {}",
+                    message.getId(), receiverId, e.getMessage());
+            message.setStatus(MessageStatus.PENDING);
+            throw new MessageDeliveryException("Failed to send message: " + e.getMessage());
         }
     }
 }

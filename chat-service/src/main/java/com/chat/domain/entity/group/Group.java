@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Set;
+
 @Data
 @RequiredArgsConstructor
 @AllArgsConstructor
@@ -21,7 +23,7 @@ public class Group {
     private String description;
     private String avatarUrl;
     private GroupType status;
-    private set<GroupMemberShip> members;
+    private Set<GroupMemberShip> members;
 
     public void updateGroup(String name, String description, String avatarUrl) {
         if (name != null) {

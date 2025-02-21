@@ -2,6 +2,8 @@ package com.chat.application.messageUsecase;
 
 // import org.springframework.context.ApplicationEventPublisher;
 // import org.springframework.kafka.core.KafkaTemplate;
+import com.chat.config.kafka.KafkaProducer;
+import com.chat.domain.entity.user.UserId;
 import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +14,6 @@ import com.chat.domain.entity.messages.MessageStatus;
 import com.chat.domain.entity.messages.MessageType;
 import com.chat.domain.entity.user.User;
 // import com.chat.domain.entity.user.UserId;
-import com.chat.domain.service.messageservice.IMessageQueueService;
 import com.chat.domain.service.messageservice.IMessageSender;
 import com.chat.domain.service.messageservice.IMessageService;
 import com.chat.domain.service.userservice.IUserService;
@@ -29,6 +30,8 @@ import lombok.AllArgsConstructor;
 // import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDateTime;
+
 // import lombok.Data;
 // import lombok.Builder;
 
@@ -42,119 +45,90 @@ public class SendMessageUseCase {
     private final IUserService userService;
     private final IMessageRepository messageRepository;
     private final IEventPublisher eventPublisher;
-    private final IMessageQueueService messageQueueService;
+    private final KafkaProducer kafkaProducer;
+    private final MessageDeliveryCoordinator deliveryCoordinator;
 
-    // private final KafkaTemplate<String, Message> kafkaTemplate;
-
+    private static final String MESSAGE_TOPIC = "message-topic";
     private static final int MAX_RETRY_ATTEMPTS = 3;
     private static final long RETRY_DELAY_MS = 1;
 
     public void execute(SendMessageInput input) {
         try {
-            // Validate users
-            User sender = userService.getUserById(input.getSenderId());
-            User receiver = userService.getUserById(input.getReceiverId());
+            validateUsers(input.getSenderId(), input.getReceiverId());
+            Message message = createAndSaveMessage(input);
 
-            if (sender == null || receiver == null) {
-                throw new UserNotFoundException("Sender or receiver not found");
-            }
-
-            // Create message
-            Message message = messageService.createMessage(
-                sender.getId(),
-                receiver.getId(),
-                new MessageContent(input.getContent()),
-                MessageType.TEXT
-            );
-
-            // Save initial message
-            messageRepository.save(message);
-            eventPublisher.publishMessageCreatedEvent(new MessageCreatedEvent(message));
-
-            // Handle delivery based on receiver's status
-            if (userService.isOnline(receiver.getId().asString())) {
-                handleOnlineDelivery(message);
+            // Try to deliver via WebSocket first
+            if (userService.isOnline(input.getReceiverId())) {
+                try {
+                    deliverMessageViaWebSocket(message);
+                } catch (MessageDeliveryException e) {
+                    log.warn("WebSocket delivery failed, switching to Kafka: {}", e.getMessage());
+                    handleKafkaDelivery(message);
+                }
             } else {
-                handleOfflineDelivery(message);
+                handleKafkaDelivery(message);
             }
-
         } catch (Exception e) {
             log.error("Error in SendMessageUseCase: {}", e.getMessage(), e);
             throw new MessageProcessingException("Failed to process message", e);
         }
     }
 
-    private void handleOnlineDelivery(Message message) {
-        int retryCount = 0;
-        long retryDelay = RETRY_DELAY_MS;
-        String messageId = message.getId().toString();
-        String recipientId = message.getReceiverId().toString();
+    private void handleKafkaDelivery(Message message) {
+        message.setStatus(MessageStatus.PENDING);
+        messageRepository.save(message);
+        kafkaProducer.sendMessage(MESSAGE_TOPIC, message);
+        eventPublisher.publishMessageQueuedEvent(new MessageQueuedEvent(message));
+    }
 
-        log.info("Starting online delivery for message: {} to recipient: {}", messageId, recipientId);
+    private void deliverMessageViaWebSocket(Message message) {
+        int retryCount = 0;
+        long delay = RETRY_DELAY_MS;
 
         while (retryCount < MAX_RETRY_ATTEMPTS) {
             try {
-                log.debug("Attempt {} - Sending message to recipient. Delay: {}ms", retryCount + 1, retryDelay);
-                long startTime = System.currentTimeMillis();
-
-                messageSender.sendMessage(message);
-
-                long deliveryTime = System.currentTimeMillis() - startTime;
-                log.info("Message {} successfully sent to recipient {} in {}ms", messageId, recipientId, deliveryTime);
-
-                updateMessageStatus(message, MessageStatus.SENT);
-                log.debug("Updated message status to SENT in database");
-
+                deliveryCoordinator.sendMessage(message);
+                message.setStatus(MessageStatus.SENT);
+                message.setSentAt(LocalDateTime.now());
+                messageRepository.save(message);
                 eventPublisher.publishMessageSentEvent(new MessageSentEvent(message));
-                log.debug("Published MessageSentEvent for message: {}", messageId);
-
                 return;
             } catch (MessageDeliveryException e) {
                 retryCount++;
-                log.warn("Attempt {} failed to send message: {} - Error: {} - Stack trace: {}",
-                        retryCount,
-                        messageId,
-                        e.getMessage(),
-                        e.getStackTrace().length > 0 ? e.getStackTrace()[0] : "No stack trace");
-
-                if (retryCount < MAX_RETRY_ATTEMPTS) {
-                    try {
-                        log.debug("Implementing exponential backoff - Waiting {}ms before retry", retryDelay);
-                        Thread.sleep(retryDelay);
-                        retryDelay *= 2; // Exponential backoff
-                    } catch (InterruptedException ie) {
-                        log.error("Thread interrupted during retry delay for message: {}", messageId, ie);
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
+                if (retryCount == MAX_RETRY_ATTEMPTS) {
+                    throw e;
+                }
+                try {
+                    Thread.sleep(delay);
+                    delay *= 2;
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new MessageDeliveryException("Delivery interrupted");
                 }
             }
         }
-
-        log.error("Message delivery failed - MessageId: {}, Recipient: {}, Attempts: {}, Total time: {}ms",
-                messageId,
-                recipientId,
-                MAX_RETRY_ATTEMPTS,
-                retryDelay - RETRY_DELAY_MS); // Calculate total time based on accumulated delay
-
-        log.info("Switching to offline delivery mode for message: {}", messageId);
-        handleOfflineDelivery(message);
     }
 
-    private void handleOfflineDelivery(Message message) {
-        try {
-            updateMessageStatus(message, MessageStatus.PENDING);
-            messageQueueService.queueMessage(message);
-            eventPublisher.publishMessageQueuedEvent(new MessageQueuedEvent(message));
-        } catch (Exception e) {
-            log.error("Failed to queue offline message: {}", e.getMessage(), e);
-            updateMessageStatus(message, MessageStatus.FAILED);
-            throw new MessageProcessingException("Failed to queue offline message", e);
-        }
-    }
+    private Message createAndSaveMessage(SendMessageInput input) {
+        Message message = messageService.createMessage(
+                String.valueOf(MessageType.TEXT),
+                input.getSenderId(),
+                input.getReceiverId(),
+                new MessageContent(input.getContent()));
 
-    private void updateMessageStatus(Message message, MessageStatus status) {
-        message.setStatus(status);
+        message.setStatus(MessageStatus.CREATED);
         messageRepository.save(message);
+        eventPublisher.publishMessageCreatedEvent(new MessageCreatedEvent(message));
+
+        return message;
+    }
+
+    private void validateUsers(String senderId, String receiverId) {
+        User sender = userService.getUserById(senderId);
+        User receiver = userService.getUserById(receiverId);
+
+        if (sender == null || receiver == null) {
+            throw new UserNotFoundException("Sender or receiver not found");
+        }
     }
 }

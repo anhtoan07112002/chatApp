@@ -10,21 +10,18 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class KafkaProducer {
-    private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper;
+    private final KafkaTemplate<String, Message> kafkaTemplate;
 
-    public KafkaProducer(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
+    public KafkaProducer(KafkaTemplate<String, Message> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
-        this.objectMapper = objectMapper;
     }
 
     public void sendMessage(String topic, Message message) {
         try {
-            String messageJson = objectMapper.writeValueAsString(message);
-            kafkaTemplate.send(topic, messageJson);
+            kafkaTemplate.send(topic, message);
+            log.info("Message sent successfully to topic: {}", topic);
         } catch (Exception e) {
-            log.error("Error serializing message: {}", e.getMessage(), e);
+            log.error("Error sending message: {}", e.getMessage(), e);
         }
-        
     }
 }

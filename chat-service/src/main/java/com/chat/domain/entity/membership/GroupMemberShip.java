@@ -15,7 +15,6 @@ import lombok.NonNull;
 @AllArgsConstructor
 @Builder
 public class GroupMemberShip {
-    @Getter
     @NonNull
     private GroupMemberShipId id;
     private GroupId groupId;

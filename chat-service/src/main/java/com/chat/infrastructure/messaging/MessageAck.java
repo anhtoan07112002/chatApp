@@ -1,19 +1,19 @@
 package com.chat.infrastructure.messaging;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Data
-@NoArgsConstructor  // Thêm constructor không tham số
+@NoArgsConstructor
+@AllArgsConstructor
 public class MessageAck {
-    private String messageId;
+    private MessageId messageId;
 
-    // Thêm JsonCreator để xử lý JSON từ client
-    @JsonCreator
-    public MessageAck(@JsonProperty("messageId") String messageId) {
-        this.messageId = messageId;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MessageId {
+        private String vaUuid;
     }
 }

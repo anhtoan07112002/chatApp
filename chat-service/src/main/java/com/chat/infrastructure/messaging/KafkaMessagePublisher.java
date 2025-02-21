@@ -5,6 +5,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import java.util.concurrent.CompletableFuture;
 
 // import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
 import com.chat.domain.entity.messages.Message;
@@ -18,23 +19,19 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 class KafkaMessagePublisher implements IMessagePublisher {
-
-    private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper;
+    private final KafkaTemplate<String, Message> kafkaTemplate;
     private static final String TOPIC = "message-topic";
 
-    public KafkaMessagePublisher(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
+    public KafkaMessagePublisher(KafkaTemplate<String, Message> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
-        this.objectMapper = objectMapper;
     }
 
     @Override
     public void publish(Message message) {
         try {
-            String messageJson = objectMapper.writeValueAsString(message);
-            CompletableFuture<org.springframework.kafka.support.SendResult<String, String>> future =
-                    kafkaTemplate.send(TOPIC, message.getId().toString(), messageJson);
-            
+            CompletableFuture<SendResult<String, Message>> future =
+                    kafkaTemplate.send(TOPIC, message.getId().toString(), message);
+
             future.whenComplete((result, ex) -> {
                 if (ex != null) {
                     log.error("Failed to send message: {}", ex.getMessage(), ex);
@@ -42,9 +39,9 @@ class KafkaMessagePublisher implements IMessagePublisher {
                     log.info("Message sent successfully: {}", message.getId());
                 }
             });
-        } catch (JsonProcessingException e) {
-            log.error("Error serializing message: {}", e.getMessage(), e);
-            throw new MessagePublishException("Error serializing message", e);
+        } catch (Exception e) {
+            log.error("Error publishing message: {}", e.getMessage(), e);
+            throw new MessagePublishException("Error publishing message", e);
         }
     }
 }

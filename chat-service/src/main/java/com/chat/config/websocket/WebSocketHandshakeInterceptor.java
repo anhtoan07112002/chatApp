@@ -47,15 +47,14 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
                 return false;
             }
 
-            // Set both the UserId object and the string representation
-            UserId userId = UserId.fromString(userIdStr);
-            attributes.put("userId", userId);
+            // Store both UserId object and string
             attributes.put("userIdString", userIdStr);
+            attributes.put("userId", UserId.fromString(userIdStr));
 
-            // Store additional user information if needed
-            attributes.put("userAuthenticated", true);
+            log.debug("Added attributes - userIdString: {}, userId: {}",
+                    attributes.get("userIdString"),
+                    attributes.get("userId"));
 
-            log.debug("Successfully added userId to attributes: {}", userIdStr);
             return true;
 
         } catch (IllegalArgumentException e) {
@@ -72,7 +71,6 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
                                ServerHttpResponse response,
                                WebSocketHandler wsHandler,
                                Exception exception) {
-        // Add any post-handshake logging if needed
         if (exception != null) {
             log.error("Exception occurred during handshake", exception);
         }

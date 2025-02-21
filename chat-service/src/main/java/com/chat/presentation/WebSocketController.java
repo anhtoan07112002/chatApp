@@ -1,5 +1,6 @@
 package com.chat.presentation;
 
+import com.chat.domain.entity.messages.MessageContent;
 import com.chat.domain.service.messageservice.IMessageSender;
 import com.chat.infrastructure.messaging.ErrorResponse;
 import com.chat.infrastructure.messaging.MessageAck;
@@ -20,10 +21,11 @@ import com.chat.domain.entity.messages.Message;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.UUID;
+
 @Controller
 @Slf4j
 public class WebSocketController {
-
     private final SendMessageUseCase sendMessageUseCase;
     private final SimpMessagingTemplate template;
     private final WebSocketMessageSender webSocketMessageSender;
@@ -38,29 +40,32 @@ public class WebSocketController {
     }
 
     @MessageMapping("/chat.send")
-    public void handleMessage(@Payload Message message) {
+    public void handleMessage(@Payload SendMessageRequest messageRequest) {
         try {
+            log.debug("Received message request: {}", messageRequest);
+
             SendMessageInput input = SendMessageInput.builder()
-                    .senderId(message.getSenderId().asString())
-                    .receiverId(message.getReceiverId().asString())
-                    .content(message.getContent().toString())
+                    .senderId(messageRequest.getSenderId())
+                    .receiverId(messageRequest.getReceiverId())
+                    .content(messageRequest.getContent())
                     .build();
 
             sendMessageUseCase.execute(input);
+            log.debug("Message processed successfully");
         } catch (Exception e) {
             log.error("Error handling message", e);
-            // Gửi thông báo lỗi về cho client
             template.convertAndSendToUser(
-                    message.getSenderId().asString(),
+                    messageRequest.getSenderId(),
                     "/queue/errors",
-                    new ErrorResponse(message.getId().toString(), e.getMessage())
+                    new ErrorResponse(UUID.randomUUID().toString(), e.getMessage())
             );
+            throw e;
         }
     }
 
     @MessageMapping("/chat.ack")
     public void handleAcknowledgment(@Payload MessageAck ack) {
-        log.debug("Received acknowledgment for message: {}", ack.getMessageId());
-        webSocketMessageSender.handleAcknowledgment(ack.getMessageId());
+        log.debug("Received acknowledgment for message: {}", ack.getMessageId().getVaUuid());
+        webSocketMessageSender.handleAcknowledgment(ack.getMessageId().getVaUuid());
     }
 }

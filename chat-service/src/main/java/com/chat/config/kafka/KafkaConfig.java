@@ -5,6 +5,7 @@ import com.chat.config.kafka.serializer.MessageSerializer;
 import com.chat.domain.entity.messages.Message;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.*;
 
@@ -18,7 +19,10 @@ import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.support.serializer.JsonSerializer;
 
 @Configuration
 public class KafkaConfig {
@@ -31,10 +35,10 @@ public class KafkaConfig {
     @Value("${kafka.topic.message}")
     private String messageTopic;
     
-    @Value("${kafka.topic.offline-messages}")
-    private String offlineMessagesTopic;
+//    @Value("${kafka.topic.offline-messages}")
+//    private String offlineMessagesTopic;
     @Bean
-    public ProducerFactory<String, String> messageProducerFactory() {
+    public ProducerFactory<String, Message> messageProducerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -43,7 +47,6 @@ public class KafkaConfig {
         configProps.put(ProducerConfig.RETRIES_CONFIG, 3);
         configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
 
-        // configProps.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, ProducerInterceptor.class.getName());
         return new DefaultKafkaProducerFactory<>(configProps);
     }
     
@@ -52,11 +55,13 @@ public class KafkaConfig {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, MessageDeserializer.class);
+
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
@@ -72,6 +77,19 @@ public class KafkaConfig {
     // }
 
     @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, Message> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Message> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(messageConsumerFactory());
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+
+        // Cấu hình các tùy chọn khác nếu cần
+        factory.setConcurrency(3); // Số lượng thread xử lý message
+
+        return factory;
+    }
+
+    @Bean
        public KafkaAdmin kafkaAdmin() {
            Map<String, Object> configs = new HashMap<>();
            configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -82,22 +100,22 @@ public class KafkaConfig {
     public NewTopic messageTopic() {
         return TopicBuilder.name("message-topic")
                 .partitions(3)
-                .replicas(2)
+                .replicas(1)
                 .config(TopicConfig.RETENTION_MS_CONFIG, String.valueOf(7 * 24 * 60 * 60 * 1000))
                 .build();
     }
 
-    @Bean
-    public NewTopic offlineMessagesTopic() {
-        return TopicBuilder.name("offline-messages")
-                .partitions(1)
-                .replicas(2)
-                .config(TopicConfig.RETENTION_MS_CONFIG, String.valueOf(7 * 24 * 60 * 60 * 1000))
-                .build();
-    }
+//    @Bean
+//    public NewTopic offlineMessagesTopic() {
+//        return TopicBuilder.name("offline-messages")
+//                .partitions(1)
+//                .replicas(2)
+//                .config(TopicConfig.RETENTION_MS_CONFIG, String.valueOf(7 * 24 * 60 * 60 * 1000))
+//                .build();
+//    }
 
     @Bean
-    public KafkaTemplate<String, String> messageKafkaTemplate() {
+    public KafkaTemplate<String, Message> messageKafkaTemplate() {
         return new KafkaTemplate<>(messageProducerFactory());
     }
 }

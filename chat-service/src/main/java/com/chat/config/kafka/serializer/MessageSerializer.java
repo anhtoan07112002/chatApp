@@ -1,17 +1,18 @@
 package com.chat.config.kafka.serializer;
 
+import com.chat.domain.entity.messages.Message;
+import com.chat.domain.entity.user.UserId;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.kafka.common.serialization.Serializer;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.kafka.support.serializer.JsonSerializer;
 
-public class MessageSerializer implements Serializer<String> {
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Override
-    public byte[] serialize(String topic, String message) {
-        try {
-            return objectMapper.writeValueAsBytes(message);
-        } catch (Exception e) {
-            throw new RuntimeException("Error serializing Message", e);
-        }
+public class MessageSerializer extends JsonSerializer<Message> {
+    public MessageSerializer() {
+        super(new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .registerModule(new SimpleModule()
+                        .addSerializer(UserId.class, new UserIdSerializer())
+                ));
     }
 }

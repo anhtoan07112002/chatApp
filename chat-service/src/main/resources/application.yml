@@ -4,27 +4,46 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-    consumer:
-      group-id: my-group
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring:
-          kafka:
-            consumer:
-              auto-offset-reset: earliest
+        spring.json.add.type.headers: false
+    consumer:
+        group-id: my-group
+        value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+        properties:
+          spring.deserializer.value.delegate.class: com.chat.config.kafka.serializer.MessageDeserializer
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: chat_db
+      auto-index-creation: true
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+  main:
+    allow-circular-references: false  # Disable circular references
+  aop:
+    proxy-target-class: true
 kafka:
   topic:
     message: message-topic
-    offline-messages: offline-messages
+#    offline-messages: offline-messages
 
 server:
   port: 8080
 
 logging:
   level:
+    org.springframework.data.mongodb: DEBUG
+    org.mongodb: DEBUG
     org.springframework.web.socket: DEBUG
     com.chat.config.websocket: DEBUG
     root: INFO
@@ -34,11 +53,13 @@ logging:
           controller: DEBUG
           service: DEBUG
           repository: DEBUG
-
-message:
-  storage:
-    path: ./messages.json
-
-user:
-  storage:
-    path: ./users.json
+jwt:
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  expiration: 86400 # 24 hours
+#message:
+#  storage:
+#    path: ./messages.json
+#
+#user:
+#  storage:
+#    path: ./users.json

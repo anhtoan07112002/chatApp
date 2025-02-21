@@ -16,5 +16,5 @@ public record GroupMemberShipId(UUID id) {
     public String asString() {
         return id.toString();
     }
-    
 }
+
