@@ -2,6 +2,8 @@ package com.chat.domain.service.userservice;
 
 import com.chat.domain.entity.user.User;
 import com.chat.domain.entity.user.UserStatus;
+
+import java.util.List;
 // import com.chat.domain.entity.user.UserId;
 
 public interface IUserService {
@@ -11,6 +13,7 @@ public interface IUserService {
     void updateUserStatus(String userId, UserStatus status);
 
     User getUserByEmail(String email);
+    List<User> getAllUsers();
 
 //    void savaUser(User user);
 }

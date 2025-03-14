@@ -2,7 +2,12 @@ package com.chat.domain.entity.user;
 
 // import java.time.LocalDateTime;
 
+import com.chat.config.kafka.serializer.UserIdDeserializer;
+import com.chat.config.kafka.serializer.UserIdSerializer;
 import com.chat.domain.entity.membership.GroupMemberShip;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,8 +21,12 @@ import java.util.Set;
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
 public class User {
     @NonNull
+
+    @JsonSerialize(using = UserIdSerializer.class)
+    @JsonDeserialize(using = UserIdDeserializer.class)
     private UserId id;
     private String userName;
     private String email;

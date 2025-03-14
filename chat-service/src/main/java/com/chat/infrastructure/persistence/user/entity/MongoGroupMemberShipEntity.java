@@ -29,10 +29,10 @@ public class MongoGroupMemberShipEntity {
         return MongoGroupMemberShipEntity.builder()
                 .id(groupMemberShip.getId().id() != null ? groupMemberShip.getId().id().toString() : null)
                 .groupId(groupMemberShip.getGroupId().id() != null ? groupMemberShip.getGroupId().id().toString() : null)
-                .userId(groupMemberShip.getUserId().value() != null ? groupMemberShip.getUserId().value().toString() : null)
+                .userId(groupMemberShip.getUserId().getValue() != null ? groupMemberShip.getUserId().getValue() : null)
                 .role(groupMemberShip.getRole())
                 .joinedAt(groupMemberShip.getJoinedAt())
-                .invitedBy(groupMemberShip.getInvitedBy() != null ? String.valueOf(groupMemberShip.getInvitedBy().value()) : null)
+                .invitedBy(groupMemberShip.getInvitedBy() != null ? String.valueOf(groupMemberShip.getInvitedBy().getValue()) : null)
                 .status(groupMemberShip.getStatus())
                 .build();
     }

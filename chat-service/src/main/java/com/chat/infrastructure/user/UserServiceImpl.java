@@ -44,15 +44,28 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class UserServiceImpl implements IUserService {
     private final IUserRepository userRepository;
     private final RedisUserService redisUserService;
     private final WebSocketSessionManager sessionManager;
     private final PasswordEncoder passwordEncoder;
+
+    public UserServiceImpl(
+            IUserRepository userRepository,
+            RedisUserService redisUserService,
+            WebSocketSessionManager sessionManager,
+            PasswordEncoder passwordEncoder
+    ) {
+        this.userRepository = userRepository;
+        this.redisUserService = redisUserService;
+        this.sessionManager = sessionManager;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public User createUser(String userName, String email, String password, String phoneNumber) {
@@ -80,7 +93,7 @@ public class UserServiceImpl implements IUserService {
         // If not in cache, get from database
         User user = userRepository.findById(UUID.fromString(id));
         if (user != null) {
-            redisUserService.cacheUser(user);
+            redisUserService.cacheUser("user:" + id, user);
             return user;
         }
 
@@ -91,6 +104,11 @@ public class UserServiceImpl implements IUserService {
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 
     @Override

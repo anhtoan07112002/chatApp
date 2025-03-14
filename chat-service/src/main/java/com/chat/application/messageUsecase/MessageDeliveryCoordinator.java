@@ -57,7 +57,7 @@ public class MessageDeliveryCoordinator {
             return;
         }
 
-        if (!sessionManager.isUserOnline(userId.asString())) {
+        if (!sessionManager.isUserOnline(userId.toString())) {
             log.debug("User {} is not online, skipping pending message delivery", userId);
             return;
         }
@@ -73,8 +73,8 @@ public class MessageDeliveryCoordinator {
                         .id(MessageResponse.MessageId.builder()
                                 .vaUuid(message.getId().vaUuid().toString())
                                 .build())
-                        .senderId(message.getSenderId().asString())
-                        .receiverId(message.getReceiverId().asString())
+                        .senderId(message.getSenderId().toString())
+                        .receiverId(message.getReceiverId().toString())
                         .content(message.getContent().getContent())
                         .status(MessageStatus.SENT.name())
                         .timestamp(LocalDateTime.now().toString())
@@ -84,7 +84,7 @@ public class MessageDeliveryCoordinator {
                 log.debug("Sending WebSocket message: {}", response);
 
                 messagingTemplate.convertAndSendToUser(
-                        userId.asString(),
+                        userId.toString(),
                         "/queue/messages",
                         response
                 );
@@ -118,7 +118,7 @@ public class MessageDeliveryCoordinator {
             throw new MessageDeliveryException("Invalid message or receiver");
         }
 
-        String receiverId = message.getReceiverId().asString();
+        String receiverId = message.getReceiverId().toString();
         SimpMessagingTemplate messagingTemplate = messagingTemplateProvider.getIfAvailable();
 
         if (messagingTemplate == null) {
@@ -136,8 +136,8 @@ public class MessageDeliveryCoordinator {
 
             MessageResponse response = MessageResponse.builder()
                     .id(MessageResponse.MessageId.builder().vaUuid(message.getId().vaUuid().toString()).build())
-                    .senderId(message.getSenderId().asString())
-                    .receiverId(message.getReceiverId().asString())
+                    .senderId(message.getSenderId().toString())
+                    .receiverId(message.getReceiverId().toString())
                     .content(message.getContent().getContent())
                     .status(message.getStatus().name())
                     .timestamp(LocalDateTime.now().toString())

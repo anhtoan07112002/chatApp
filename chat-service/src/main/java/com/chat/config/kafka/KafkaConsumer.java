@@ -132,7 +132,7 @@ public class KafkaConsumer {
                 return;
             }
 
-            String receiverId = existingMessage.getReceiverId().asString();
+            String receiverId = existingMessage.getReceiverId().toString();
 
             // Nếu tin nhắn đã được gửi, bỏ qua
             if (existingMessage.getStatus() == MessageStatus.SENT) {

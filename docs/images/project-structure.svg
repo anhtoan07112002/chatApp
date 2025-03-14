@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <!-- Background -->
+  <rect width="800" height="800" fill="#f8f9fa" />
+  
+  <!-- Project Structure Tree -->
+  <g font-family="monospace" font-size="14">
+    <!-- Main tree stem -->
+    <line x1="40" y1="30" x2="40" y2="770" stroke="#ddd" stroke-width="2" />
+    
+    <!-- Root -->
+    <text x="50" y="30" fill="#333" font-weight="bold">chat-service/</text>
+    
+    <!-- src -->
+    <line x1="40" y1="50" x2="60" y2="50" stroke="#ddd" stroke-width="2" />
+    <line x1="60" y1="50" x2="60" y2="700" stroke="#ddd" stroke-width="2" />
+    <text x="70" y="55" fill="#333" font-weight="bold">src/</text>
+    
+    <!-- main -->
+    <line x1="60" y1="75" x2="80" y2="75" stroke="#ddd" stroke-width="2" />
+    <line x1="80" y1="75" x2="80" y2="650" stroke="#ddd" stroke-width="2" />
+    <text x="90" y="80" fill="#333">main/</text>
+    
+    <!-- java -->
+    <line x1="80" y1="100" x2="100" y2="100" stroke="#ddd" stroke-width="2" />
+    <line x1="100" y1="100" x2="100" y2="600" stroke="#ddd" stroke-width="2" />
+    <text x="110" y="105" fill="#333">java/</text>
+    
+    <!-- com.chat -->
+    <line x1="100" y1="125" x2="120" y2="125" stroke="#ddd" stroke-width="2" />
+    <line x1="120" y1="125" x2="120" y2="575" stroke="#ddd" stroke-width="2" />
+    <text x="130" y="130" fill="#333">com.chat/</text>
+    
+    <!-- ChatServiceApplication.java -->
+    <line x1="120" y1="150" x2="140" y2="150" stroke="#ddd" stroke-width="2" />
+    <text x="150" y="155" fill="#0066cc">ChatServiceApplication.java</text>
+    
+    <!-- Domain Package -->
+    <line x1="120" y1="175" x2="140" y2="175" stroke="#ddd" stroke-width="2" />
+    <line x1="140" y1="175" x2="140" y2="350" stroke="#ddd" stroke-width="2" />
+    <text x="150" y="180" fill="#333" font-weight="bold">domain/</text>
+    
+    <!-- domain sub packages -->
+    <line x1="140" y1="200" x2="160" y2="200" stroke="#ddd" stroke-width="2" />
+    <line x1="160" y1="200" x2="160" y2="275" stroke="#ddd" stroke-width="2" />
+    <text x="170" y="205" fill="#333">entity/ <tspan fill="#777">(messages, users, groups, blocklist)</tspan></text>
+    
+    <line x1="160" y1="225" x2="180" y2="225" stroke="#ddd" stroke-width="2" />
+    <text x="190" y="230" fill="#333">Message.java, User.java, etc.</text>
+    
+    <line x1="160" y1="250" x2="180" y2="250" stroke="#ddd" stroke-width="2" />
+    <text x="190" y="255" fill="#333">MessageId.java, UserId.java, etc.</text>
+    
+    <line x1="160" y1="275" x2="180" y2="275" stroke="#ddd" stroke-width="2" />
+    <text x="190" y="280" fill="#333">MessageStatus.java, UserStatus.java, etc.</text>
+    
+    <line x1="140" y1="300" x2="160" y2="300" stroke="#ddd" stroke-width="2" />
+    <text x="170" y="305" fill="#333">event/</text>
+    
+    <line x1="140" y1="325" x2="160" y2="325" stroke="#ddd" stroke-width="2" />
+    <text x="170" y="330" fill="#333">repository/ <tspan fill="#777">(IMessageRepository)</tspan></text>
+    
+    <line x1="140" y1="350" x2="160" y2="350" stroke="#ddd" stroke-width="2" />
+    <text x="170" y="355" fill="#333">service/ <tspan fill="#777">(IMessageService, IMessageSender)</tspan></text>
+    
+    <!-- Application Package -->
+    <line x1="120" y1="375" x2="140" y2="375" stroke="#ddd" stroke-width="2" />
+    <line x1="140" y1="375" x2="140" y2="400" stroke="#ddd" stroke-width="2" />
+    <text x="150" y="380" fill="#333" font-weight="bold">application/</text>
+    
+    <line x1="140" y1="400" x2="160" y2="400" stroke="#ddd" stroke-width="2" />
+    <text x="170" y="405" fill="#333">messageUsecase/ <tspan fill="#777">(SendMessageUseCase)</tspan></text>
+    
+    <!-- Infrastructure Package -->
+    <line x1="120" y1="425" x2="140" y2="425" stroke="#ddd" stroke-width="2" />
+    <line x1="140" y1="425" x2="140" y2="500" stroke="#ddd" stroke-width="2" />
+    <text x="150" y="430" fill="#333" font-weight="bold">infrastructure/</text>
+    
+    <line x1="140" y1="450" x2="160" y2="450" stroke="#ddd" stroke-width="2" />
+    <text x="170" y="455" fill="#333">config/ <tspan fill="#777">(WebSocketConfig)</tspan></text>
+    
+    <line x1="140" y1="475" x2="160" y2="475" stroke="#ddd" stroke-width="2" />
+    <text x="170" y="480" fill="#333">messaging/ <tspan fill="#777">(WebSocketMessageSender)</tspan></text>
+    
+    <line x1="140" y1="500" x2="160" y2="500" stroke="#ddd" stroke-width="2" />
+    <text x="170" y="505" fill="#333">persistence/ <tspan fill="#777">(TextFileRepository, MongoMessageRepository)</tspan></text>
+    
+    <!-- Presentation Package -->
+    <line x1="120" y1="525" x2="140" y2="525" stroke="#ddd" stroke-width="2" />
+    <line x1="140" y1="525" x2="140" y2="575" stroke="#ddd" stroke-width="2" />
+    <text x="150" y="530" fill="#333" font-weight="bold">presentation/</text>
+    
+    <line x1="140" y1="550" x2="160" y2="550" stroke="#ddd" stroke-width="2" />
+    <text x="170" y="555" fill="#333">MessageController.java</text>
+    
+    <line x1="140" y1="575" x2="160" y2="575" stroke="#ddd" stroke-width="2" />
+    <text x="170" y="580" fill="#333">MessageServiceImpl.java, SendMessageRequest.java</text>
+    
+    <!-- resources -->
+    <line x1="80" y1="625" x2="100" y2="625" stroke="#ddd" stroke-width="2" />
+    <line x1="100" y1="625" x2="100" y2="650" stroke="#ddd" stroke-width="2" />
+    <text x="110" y="630" fill="#333">resources/</text>
+    
+    <line x1="100" y1="650" x2="120" y2="650" stroke="#ddd" stroke-width="2" />
+    <text x="130" y="655" fill="#333">application.yml</text>
+    
+    <!-- test -->
+    <line x1="60" y1="675" x2="80" y2="675" stroke="#ddd" stroke-width="2" />
+    <line x1="80" y1="675" x2="80" y2="700" stroke="#ddd" stroke-width="2" />
+    <text x="90" y="680" fill="#333">test/ <tspan fill="#777">(commented out test files)</tspan></text>
+    
+    <!-- pom.xml -->
+    <line x1="40" y1="725" x2="60" y2="725" stroke="#ddd" stroke-width="2" />
+    <text x="70" y="730" fill="#333" font-weight="bold">pom.xml</text>
+    
+    <!-- Explanation Box -->
+    <rect x="450" y="50" width="320" height="300" fill="#fff" stroke="#ddd" rx="5" ry="5"/>
+    <text x="460" y="75" font-family="Arial" font-size="16" fill="#333" font-weight="bold">Hexagonal Architecture</text>
+    <text x="460" y="100" font-family="Arial" font-size="14" fill="#333">
+      <tspan x="460" dy="0">Dự án được tổ chức theo mô hình Hexagonal</tspan>
+      <tspan x="460" dy="20">(Ports and Adapters):</tspan>
+      <tspan x="460" dy="30">• Domain: Lõi nghiệp vụ, các entity và interface</tspan>
+      <tspan x="460" dy="20">• Application: Các use case</tspan>
+      <tspan x="460" dy="20">• Infrastructure: Triển khai cụ thể các adapter</tspan>
+      <tspan x="460" dy="20">  (repository, messaging)</tspan>
+      <tspan x="460" dy="20">• Presentation: Controllers và DTO</tspan>
+      <tspan x="460" dy="40">Domain layer là trung tâm, các layer khác</tspan>
+      <tspan x="460" dy="20">phụ thuộc vào domain layer, không phụ thuộc</tspan>
+      <tspan x="460" dy="20">ngược lại.</tspan>
+    </text>
+  </g>
+</svg>

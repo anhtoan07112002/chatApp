@@ -36,7 +36,7 @@ public class WebSocketMessageSender implements IMessageSender {
 
     @Override
     public void sendMessage(Message message) {
-        String receiverId = message.getReceiverId().asString();
+        String receiverId = message.getReceiverId().toString();
         String messageId = message.getId().vaUuid().toString();
 
         if (!sessionManager.isUserOnline(receiverId)) {

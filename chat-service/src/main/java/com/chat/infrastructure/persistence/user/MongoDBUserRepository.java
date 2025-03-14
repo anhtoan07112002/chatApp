@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,6 +36,14 @@ public class MongoDBUserRepository implements IUserRepository {
         query.addCriteria(Criteria.where("email").is(email));
         MongoUserEntity entity = mongoTemplate.findOne(query, MongoUserEntity.class);
         return Optional.ofNullable(entity).map(MongoUserEntity::toDomain);
+    }
+
+    @Override
+    public List<User> findAll() {
+        List<MongoUserEntity> entities = mongoTemplate.findAll(MongoUserEntity.class);
+        return entities.stream()
+                .map(MongoUserEntity::toDomain)
+                .toList();
     }
 
     @Override

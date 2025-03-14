@@ -20,7 +20,7 @@ public class WebSocketSessionManager {
         if (userId == null) {
             return null;
         }
-        return sessions.get(userId.asString());
+        return sessions.get(userId.toString());
     }
 
     public void addSession(UserId userId, String sessionId) {
@@ -29,7 +29,7 @@ public class WebSocketSessionManager {
             return;
         }
 
-        String userIdStr = userId.asString();
+        String userIdStr = userId.toString();
         String existingSession = sessions.get(userIdStr);
         if (existingSession != null && !existingSession.equals(sessionId)) {
             log.warn("Replacing existing session {} with new session {} for user {}",
@@ -46,7 +46,7 @@ public class WebSocketSessionManager {
             return;
         }
 
-        String userIdStr = userId.asString();
+        String userIdStr = userId.toString();
         String removedSession = sessions.remove(userIdStr);
         if (removedSession != null) {
             sessionTimestamps.remove(removedSession);

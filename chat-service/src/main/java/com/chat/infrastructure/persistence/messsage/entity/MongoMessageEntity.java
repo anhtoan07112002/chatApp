@@ -25,8 +25,8 @@ public class MongoMessageEntity {
     public static MongoMessageEntity fromDomain(Message message) {
         MongoMessageEntity entity = new MongoMessageEntity();
         entity.setId(message.getId().vaUuid().toString());
-        entity.setSenderId(message.getSenderId().asString());
-        entity.setReceiverId(message.getReceiverId().asString());
+        entity.setSenderId(message.getSenderId().toString());
+        entity.setReceiverId(message.getReceiverId().toString());
         entity.setContent(message.getContent().getContent());
         entity.setType(message.getType().name());
         entity.setStatus(message.getStatus().name());

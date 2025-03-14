@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Chat Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { 
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .user-panel {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            background: #f9f9f9;
+        }
+        .message-bubble {
+            margin: 5px 0;
+            padding: 8px 12px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+        .sent-message {
+            background-color: #007bff;
+            color: white;
+            margin-left: auto;
+        }
+        .received-message {
+            background-color: #e9ecef;
+            color: black;
+        }
+        .connection-status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        input, button {
+            margin: 5px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        input {
+            flex-grow: 1;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            min-width: 80px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        .message-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- User A Panel -->
+        <div class="user-panel">
+            <h2>User A</h2>
+            <div class="connection-status disconnected" id="statusA">
+                Disconnected
+            </div>
+            <div class="input-group">
+                <input type="text" id="userIdA" placeholder="User ID A" 
+                       value="0b6d800d-c880-4fe0-a87e-7afce704c774">
+                <button onclick="connectUser('A')" id="connectBtnA">Connect</button>
+            </div>
+            <div class="chat-container">
+                <div class="chat-messages" id="messagesA"></div>
+                <div class="message-input">
+                    <input type="text" id="messageA" placeholder="Type message...">
+                    <button onclick="sendMessage('A', 'B')" id="sendBtnA" disabled>Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- User B Panel -->
+        <div class="user-panel">
+            <h2>User B</h2>
+            <div class="connection-status disconnected" id="statusB">
+                Disconnected
+            </div>
+            <div class="input-group">
+                <input type="text" id="userIdB" placeholder="User ID B"
+                       value="371815db-1b38-496e-b36d-9728452994fa">
+                <button onclick="connectUser('B')" id="connectBtnB">Connect</button>
+            </div>
+            <div class="chat-container">
+                <div class="chat-messages" id="messagesB"></div>
+                <div class="message-input">
+                    <input type="text" id="messageB" placeholder="Type message...">
+                    <button onclick="sendMessage('B', 'A')" id="sendBtnB" disabled>Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stompClientA = null;
+        let stompClientB = null;
+        let activeConnections = new Set();
+
+        function addMessageToChat(user, message, isSent) {
+            const messagesDiv = document.getElementById(`messages${user}`);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-bubble ${isSent ? 'sent-message' : 'received-message'}`;
+            messageDiv.textContent = message;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function updateUserStatus(user, isConnected) {
+            const status = document.getElementById(`status${user}`);
+            const sendBtn = document.getElementById(`sendBtn${user}`);
+            
+            if (isConnected) {
+                status.className = 'connection-status connected';
+                status.textContent = 'Connected';
+                sendBtn.disabled = false;
+            } else {
+                status.className = 'connection-status disconnected';
+                status.textContent = 'Disconnected';
+                sendBtn.disabled = true;
+            }
+        }
+
+        function connectUser(user) {
+            const userId = document.getElementById(`userId${user}`).value;
+
+            const socketOptions = {
+                transports: ["websocket", "xhr-streaming", "xhr-polling"],
+                timeout: 20000
+            };
+            
+            const encodedUserId = encodeURIComponent(userId);
+            const socket = new SockJS(`http://localhost:8080/ws?userId=${encodedUserId}`, null, socketOptions);
+            const stompClient = Stomp.over(socket);
+            
+            const headers = {
+                "X-User-Id": userId
+            };
+
+            stompClient.debug = function(str) {
+                console.log(str);
+            };
+
+            stompClient.connect(
+                headers,
+                function (frame) {
+                    if (user === 'A') {
+                        stompClientA = stompClient;
+                    } else {
+                        stompClientB = stompClient;
+                    }
+                    
+                    activeConnections.add(user);
+                    updateUserStatus(user, true);
+                    document.getElementById(`connectBtn${user}`).disabled = true;
+
+                    // stompClient.subscribe('/user/queue/messages', function(message) {
+                    //     const received = JSON.parse(message.body);
+                    //     // const messageContent = received.content ? received.content.content : received.content;
+                    //     console.log('Received message:', received); // Thêm log để debug
+                    //     const messageContent = received.content;
+                    //     addMessageToChat(user, messageContent, false);
+                        
+                    //     // Gửi acknowledgment
+                    //     const ackPayload = {
+                    //         messageId: {
+                    //             vaUuid: received.id.vaUuid
+                    //         }
+                    //     };
+                        
+                    //     stompClient.send("/app/chat.ack", {}, JSON.stringify(ackPayload));
+                    // }, {
+                    //     'id': userId + '-sub',
+                    //     'ack': 'client'
+                    // });
+
+                    stompClient.subscribe('/user/queue/messages', function(message) {
+                        try {
+                            const received = JSON.parse(message.body);
+                            console.log('Received WebSocket message:', received);  // Debug log
+
+                            // Validate message format
+                            if (!received || typeof received.content !== 'string') {
+                                console.error('Invalid message format:', received);
+                                return;
+                            }
+
+                            // Add message to chat
+                            addMessageToChat(user, received.content, false);
+                            
+                            // Send acknowledgment
+                            if (received.id && received.id.vaUuid) {
+                                const ackPayload = {
+                                    messageId: {
+                                        vaUuid: received.id.vaUuid
+                                    }
+                                };
+                                
+                                stompClient.send("/app/chat.ack", {}, JSON.stringify(ackPayload));
+                                console.log('Sent acknowledgment for message:', received.id.vaUuid);
+                            } else {
+                                console.error('Message missing ID for acknowledgment:', received);
+                            }
+                        } catch (error) {
+                            console.error('Error processing WebSocket message:', error);
+                        }
+                    });
+
+                    stompClient.subscribe('/topic/public', function(message) {
+                        const received = JSON.parse(message.body);
+                        console.log('Public message received:', received);
+                    });
+                },
+                function(error) {
+                    console.error(`Connection error for User ${user}:`, error);
+                    updateUserStatus(user, false);
+                }
+            );
+        }
+
+        function sendMessage(sender, receiver) {
+            const messageInput = document.getElementById(`message${sender}`);
+            const message = messageInput.value;
+            if (!message.trim()) return;
+
+            const senderId = document.getElementById(`userId${sender}`).value;
+            const receiverId = document.getElementById(`userId${receiver}`).value;
+            
+            const stompClient = sender === 'A' ? stompClientA : stompClientB;
+            
+            if (!stompClient) {
+                console.error(`User ${sender} is not connected!`);
+                return;
+            }
+
+            const payload = {
+                senderId: senderId,
+                receiverId: receiverId,
+                content: message
+            };
+
+            stompClient.send("/app/chat.send", {}, JSON.stringify(payload));
+            addMessageToChat(sender, message, true);
+            messageInput.value = '';
+        }
+
+        // Handle Enter key press for both users
+        document.getElementById('messageA').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage('A', 'B');
+            }
+        });
+
+        document.getElementById('messageB').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage('B', 'A');
+            }
+        });
+
+        // Clean up on page unload
+        window.onbeforeunload = function() {
+            if (stompClientA) stompClientA.disconnect();
+            if (stompClientB) stompClientB.disconnect();
+        };
+    </script>
+</body>
+</html>

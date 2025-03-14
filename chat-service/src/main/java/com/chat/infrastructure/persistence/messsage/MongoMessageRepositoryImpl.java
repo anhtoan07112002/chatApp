@@ -59,7 +59,7 @@ public class MongoMessageRepositoryImpl implements IMessageRepository {
 
     @Override
     public List<Message> findBySenderId(UserId senderId) {
-        return getRepository().findBySenderId(senderId.asString())
+        return getRepository().findBySenderId(senderId.toString())
                 .stream()
                 .map(MongoMessageEntity::toDomain)
                 .collect(Collectors.toList());
@@ -68,7 +68,7 @@ public class MongoMessageRepositoryImpl implements IMessageRepository {
     @Override
     public List<Message> findPendingMessagesByReceiverId(UserId receiverId) {
         return getRepository().findByReceiverIdAndStatus(
-                        receiverId.asString(),
+                        receiverId.toString(),
                         "PENDING"
                 )
                 .stream()

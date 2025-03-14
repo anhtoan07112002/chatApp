@@ -45,7 +45,9 @@ logging:
     org.springframework.data.mongodb: DEBUG
     org.mongodb: DEBUG
     org.springframework.web.socket: DEBUG
+    org.springframework.security: DEBUG
     com.chat.config.websocket: DEBUG
+
     root: INFO
     com:
       chat:
@@ -53,6 +55,8 @@ logging:
           controller: DEBUG
           service: DEBUG
           repository: DEBUG
+        infrastructure:
+          security: DEBUG
 jwt:
   secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
   expiration: 86400 # 24 hours

@@ -45,7 +45,7 @@ public class MessageListenerImpl implements IMessageListener {
 
         try {
             log.info("Received message: {}", message.getId());
-            String receiverId = message.getReceiverId().asString();
+            String receiverId = message.getReceiverId().toString();
 
             if (userService.isOnline(receiverId)) {
                 try {

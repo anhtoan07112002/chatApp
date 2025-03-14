@@ -15,8 +15,8 @@ public class UserIdSerializer extends StdSerializer<UserId> {
 
     @Override
     public void serialize(UserId userId, JsonGenerator gen, SerializerProvider provider) throws IOException {
-        if (userId != null && userId.value() != null) {
-            gen.writeString(userId.value().toString());
+        if (userId != null && userId.getValue() != null) {
+            gen.writeString(userId.getValue());
         } else {
             gen.writeNull();
         }

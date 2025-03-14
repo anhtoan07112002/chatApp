@@ -41,7 +41,7 @@ public class MongoUserEntity {
 
     public static MongoUserEntity fromDomain(User user) {
         return MongoUserEntity.builder()
-                .id(user.getId().value() != null ? user.getId().value().toString() : null)
+                .id(user.getId().getValue() != null ? user.getId().getValue() : null)
                 .userName(user.getUserName())
                 .email(user.getEmail())
                 .phoneNumber(user.getPhoneNumber())
