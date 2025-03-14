@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Application</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .chat-container {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+
+        .chat-panel {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin: 10px 0;
+            background: #f9f9f9;
+        }
+
+        .message {
+            margin: 5px 0;
+            padding: 8px 12px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+
+        .sent {
+            background-color: #007bff;
+            color: white;
+            margin-left: auto;
+        }
+
+        .received {
+            background-color: #e9ecef;
+            color: black;
+        }
+
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            text-align: center;
+            border-radius: 4px;
+        }
+
+        .online {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .offline {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        input,
+        button {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        input {
+            flex-grow: 1;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            min-width: 80px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login Form -->
+    <div id="loginContainer" class="login-container">
+        <h2>Login</h2>
+        <div class="input-group">
+            <input type="email" id="email" placeholder="Email">
+        </div>
+        <div class="input-group">
+            <input type="password" id="password" placeholder="Password">
+        </div>
+        <button onclick="handleLogin()">Login</button>
+    </div>
+
+    <!-- Chat Interface -->
+    <div id="chatContainer" class="chat-container">
+        <!-- User Panel -->
+        <div class="chat-panel">
+            <h2>User Chat</h2>
+            <div id="userStatus" class="status offline">Disconnected</div>
+            <div id="userMessages" class="messages"></div>
+            <div class="input-group">
+                <input type="text" id="receiverId" placeholder="Receiver ID">
+            </div>
+            <div class="input-group">
+                <input type="text" id="messageInput" placeholder="Type a message...">
+                <button onclick="sendMessage()" id="sendButton" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let currentUser = {
+            token: null,
+            userId: null,
+            userName: null
+        };
+        let stompClient = null;
+
+        // Constants
+        const API_BASE_URL = 'http://localhost:8080';
+        const WS_URL = `${API_BASE_URL}/ws`;
+        const ACK_TIMEOUT = 10000;
+
+        // Login handling
+        async function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Login failed');
+                }
+
+                const data = await response.json();
+                currentUser = {
+                    token: data.token,
+                    userId: data.userId,
+                    userName: data.userName
+                };
+
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('chatContainer').style.display = 'grid';
+
+                connectWebSocket();
+            } catch (error) {
+                console.error('Login error:', error);
+            }
+        }
+
+        // WebSocket connection
+        function connectWebSocket() {
+            // Only send userId in query param
+            const socketUrl = `${WS_URL}?userId=${encodeURIComponent(currentUser.userId)}`;
+            const socket = new SockJS(socketUrl);
+            stompClient = Stomp.over(socket);
+
+            // Add token in connect headers
+            const connectHeaders = {
+                'Authorization': `Bearer ${currentUser.token}`
+            };
+
+            stompClient.connect(
+                connectHeaders,
+                onConnect,
+                onError
+            );
+
+            // Optional: Add debug logs
+            stompClient.debug = function (str) {
+                console.log('STOMP: ' + str);
+            };
+        }
+
+        function onConnect(frame) {
+            console.log('Connected: ' + frame);
+            updateStatus(true);
+            document.getElementById('sendButton').disabled = false;
+
+            // Subscribe to personal message queue with headers
+            const subscribeHeaders = {
+                'Authorization': `Bearer ${currentUser.token}`
+            };
+
+            stompClient.subscribe('/user/queue/messages', handleMessage, subscribeHeaders);
+        }
+
+        function onError(error) {
+            console.error('WebSocket connection error:', error);
+            updateStatus(false);
+            document.getElementById('sendButton').disabled = true;
+
+            // Add reconnection logic
+            setTimeout(() => {
+                console.log('Attempting to reconnect...');
+                connectWebSocket();
+            }, 5000);
+        }
+
+        // Message handling
+        function handleMessage(message) {
+            try {
+                const received = JSON.parse(message.body);
+                console.log('Received message:', received);
+
+                if (received.content) {
+                    addMessageToChat(received.content, false);
+
+                    // Send acknowledgment
+                    if (received.id && received.id.vaUuid) {
+                        const ackPayload = {
+                            messageId: {
+                                vaUuid: received.id.vaUuid
+                            }
+                        };
+                        stompClient.send("/app/chat.ack", {}, JSON.stringify(ackPayload));
+                    }
+                }
+            } catch (error) {
+                console.error('Error processing message:', error);
+            }
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const receiverId = document.getElementById('receiverId').value;
+            const content = messageInput.value.trim();
+
+            if (!content || !receiverId) return;
+
+            const payload = {
+                senderId: currentUser.userId,
+                receiverId: receiverId,
+                content: content
+            };
+
+            stompClient.send("/app/chat.send", {}, JSON.stringify(payload));
+            addMessageToChat(content, true);
+            messageInput.value = '';
+        }
+
+        // UI updates
+        function addMessageToChat(content, isSent) {
+            const messagesDiv = document.getElementById('userMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+            messageDiv.textContent = content;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function updateStatus(isConnected) {
+            const status = document.getElementById('userStatus');
+            status.className = `status ${isConnected ? 'online' : 'offline'}`;
+            status.textContent = isConnected ? 'Connected' : 'Disconnected';
+
+            // Log connection state
+            console.log(`WebSocket connection status: ${isConnected ? 'Connected' : 'Disconnected'}`);
+        }
+
+        // Event listeners
+        document.getElementById('messageInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Cleanup
+        window.onbeforeunload = function () {
+            if (stompClient) {
+                stompClient.disconnect();
+            }
+        };
+    </script>
+</body>
+
+</html>

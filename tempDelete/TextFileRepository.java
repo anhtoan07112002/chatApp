@@ -8,18 +8,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.chat.domain.entity.messages.MessageId;
+import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Value;
+
 import com.chat.domain.entity.messages.Message;
+import com.chat.domain.entity.messages.MessageStatus;
 import com.chat.domain.entity.user.UserId;
 import com.chat.domain.repository.messageReponsitory.IMessageRepository;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+//@Repository
 public class TextFileRepository implements IMessageRepository {
 
     private final File file;
     private final Gson gson;
 
-    public TextFileRepository(String filePath) {
+    public TextFileRepository(@Value("${message.storage.path:messages.json}") String filePath) {
         this.file = new File(filePath);
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         try {
@@ -54,7 +60,19 @@ public class TextFileRepository implements IMessageRepository {
     }
 
     @Override
-        public List<Message> findBySenderId(UserId senderId) {
-            return loadMessages().stream().filter(m -> m.getSenderId().equals(senderId)).collect(Collectors.toList());
-        }
+    public List<Message> findBySenderId(UserId senderId) {
+        return loadMessages().stream().filter(m -> m.getSenderId().equals(senderId)).collect(Collectors.toList());
     }
+
+    @Override
+    public List<Message> findPendingMessagesByReceiverId(UserId receiverId) {
+        return loadMessages().stream().filter(m -> m.getReceiverId().equals(receiverId) && m.getStatus() == MessageStatus.PENDING).collect(Collectors.toList());
+    }
+
+    public Message findById(MessageId id) {
+        return loadMessages().stream()
+                .filter(m -> m.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+}

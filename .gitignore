@@ -1,0 +1,33 @@
+# Ignore chat-frontend directory
+chat-frontend/
+
+# Ignore node modules
+node_modules/
+
+# Ignore build directories
+*/target/
+*/build/
+*/dist/
+
+# Ignore IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# Ignore logs
+*.log
+logs/
+
+# Ignore OS specific files
+.DS_Store
+Thumbs.db
+
+# Ignore Maven specific files
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Ignore application properties with sensitive info
+**/src/main/resources/application-dev.yml
+**/src/main/resources/application-prod.yml

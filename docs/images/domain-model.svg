@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8f9fa" />
+  
+  <!-- Title -->
+  <text x="400" y="30" font-family="Arial" font-size="20" text-anchor="middle" fill="#333" font-weight="bold">Mô hình Domain của Chat Service</text>
+  
+  <!-- User Entity -->
+  <rect x="50" y="80" width="200" height="180" rx="5" fill="#e6f7ff" stroke="#1890ff" stroke-width="2" />
+  <rect x="50" y="80" width="200" height="30" rx="5" fill="#1890ff" stroke="#1890ff" stroke-width="0" />
+  <text x="150" y="100" font-family="Arial" font-size="14" text-anchor="middle" fill="white" font-weight="bold">User</text>
+  
+  <line x1="50" y1="110" x2="250" y2="110" stroke="#1890ff" stroke-width="1" />
+  <text x="60" y="130" font-family="Arial" font-size="12" fill="#333">- id: UserId</text>
+  <text x="60" y="150" font-family="Arial" font-size="12" fill="#333">- userName: String</text>
+  <text x="60" y="170" font-family="Arial" font-size="12" fill="#333">- email: String</text>
+  <text x="60" y="190" font-family="Arial" font-size="12" fill="#333">- phoneNumber: String</text>
+  <text x="60" y="210" font-family="Arial" font-size="12" fill="#333">- status: UserStatus</text>
+  <text x="60" y="230" font-family="Arial" font-size="12" fill="#333">- groups: Set&lt;GroupMemberShip&gt;</text>
+  
+  <line x1="50" y1="240" x2="250" y2="240" stroke="#1890ff" stroke-width="1" />
+  <text x="60" y="255" font-family="Arial" font-size="12" fill="#333">+ markAsOnline()</text>
+  
+  <!-- Message Entity -->
+  <rect x="550" y="80" width="200" height="180" rx="5" fill="#e6f7ff" stroke="#1890ff" stroke-width="2" />
+  <rect x="550" y="80" width="200" height="30" rx="5" fill="#1890ff" stroke="#1890ff" stroke-width="0" />
+  <text x="650" y="100" font-family="Arial" font-size="14" text-anchor="middle" fill="white" font-weight="bold">Message</text>
+  
+  <line x1="550" y1="110" x2="750" y2="110" stroke="#1890ff" stroke-width="1" />
+  <text x="560" y="130" font-family="Arial" font-size="12" fill="#333">- id: MessageId</text>
+  <text x="560" y="150" font-family="Arial" font-size="12" fill="#333">- senderId: UserId</text>
+  <text x="560" y="170" font-family="Arial" font-size="12" fill="#333">- receiverId: UserId</text>
+  <text x="560" y="190" font-family="Arial" font-size="12" fill="#333">- content: MessageContent</text>
+  <text x="560" y="210" font-family="Arial" font-size="12" fill="#333">- sentAt: LocalDateTime</text>
+  <text x="560" y="230" font-family="Arial" font-size="12" fill="#333">- status: MessageStatus</text>
+  
+  <line x1="550" y1="240" x2="750" y2="240" stroke="#1890ff" stroke-width="1" />
+  <text x="560" y="255" font-family="Arial" font-size="12" fill="#333">+ markAsRead()</text>
+  
+  <!-- Group Entity -->
+  <rect x="50" y="350" width="200" height="180" rx="5" fill="#e6f7ff" stroke="#1890ff" stroke-width="2" />
+  <rect x="50" y="350" width="200" height="30" rx="5" fill="#1890ff" stroke="#1890ff" stroke-width="0" />
+  <text x="150" y="370" font-family="Arial" font-size="14" text-anchor="middle" fill="white" font-weight="bold">Group</text>
+  
+  <line x1="50" y1="380" x2="250" y2="380" stroke="#1890ff" stroke-width="1" />
+  <text x="60" y="400" font-family="Arial" font-size="12" fill="#333">- id: GroupId</text>
+  <text x="60" y="420" font-family="Arial" font-size="12" fill="#333">- name: String</text>
+  <text x="60" y="440" font-family="Arial" font-size="12" fill="#333">- description: String</text>
+  <text x="60" y="460" font-family="Arial" font-size="12" fill="#333">- avatarUrl: String</text>
+  <text x="60" y="480" font-family="Arial" font-size="12" fill="#333">- status: GroupType</text>
+  <text x="60" y="500" font-family="Arial" font-size="12" fill="#333">- members: Set&lt;GroupMemberShip&gt;</text>
+  
+  <line x1="50" y1="510" x2="250" y2="510" stroke="#1890ff" stroke-width="1" />
+  <text x="60" y="525" font-family="Arial" font-size="12" fill="#333">+ updateGroup()</text>
+  
+  <!-- GroupMembership Entity -->
+  <rect x="300" y="350" width="200" height="180" rx="5" fill="#e6f7ff" stroke="#1890ff" stroke-width="2" />
+  <rect x="300" y="350" width="200" height="30" rx="5" fill="#1890ff" stroke="#1890ff" stroke-width="0" />
+  <text x="400" y="370" font-family="Arial" font-size="14" text-anchor="middle" fill="white" font-weight="bold">GroupMemberShip</text>
+  
+  <line x1="300" y1="380" x2="500" y2="380" stroke="#1890ff" stroke-width="1" />
+  <text x="310" y="400" font-family="Arial" font-size="12" fill="#333">- id: GroupMemberShipId</text>
+  <text x="310" y="420" font-family="Arial" font-size="12" fill="#333">- groupId: GroupId</text>
+  <text x="310" y="440" font-family="Arial" font-size="12" fill="#333">- userId: UserId</text>
+  <text x="310" y="460" font-family="Arial" font-size="12" fill="#333">- role: GroupRole</text>
+  <text x="310" y="480" font-family="Arial" font-size="12" fill="#333">- joinedAt: LocalDateTime</text>
+  <text x="310" y="500" font-family="Arial" font-size="12" fill="#333">- status: GroupMemberShipStatus</text>
+  
+  <!-- BlockList Entity -->
+  <rect x="550" y="350" width="200" height="180" rx="5" fill="#e6f7ff" stroke="#1890ff" stroke-width="2" />
+  <rect x="550" y="350" width="200" height="30" rx="5" fill="#1890ff" stroke="#1890ff" stroke-width="0" />
+  <text x="650" y="370" font-family="Arial" font-size="14" text-anchor="middle" fill="white" font-weight="bold">BlockList</text>
+  
+  <line x1="550" y1="380" x2="750" y2="380" stroke="#1890ff" stroke-width="1" />
+  <text x="560" y="400" font-family="Arial" font-size="12" fill="#333">- id: BlockListId</text>
+  <text x="560" y="420" font-family="Arial" font-size="12" fill="#333">- ownerId: UserId</text>
+  <text x="560" y="440" font-family="Arial" font-size="12" fill="#333">- blocks: Set&lt;Block&gt;</text>
+  
+  <!-- Relationships -->
+  <!-- User to Message (sends) -->
+  <line x1="250" y1="170" x2="550" y2="170" stroke="#333" stroke-width="1.5" stroke-dasharray="5,3" />
+  <text x="400" y="160" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">sends</text>
+  <text x="540" y="160" font-family="Arial" font-size="12" text-anchor="end" fill="#333">*</text>
+  <text x="260" y="160" font-family="Arial" font-size="12" text-anchor="start" fill="#333">1</text>
+  
+  <!-- User to GroupMembership -->
+  <line x1="150" y1="260" x2="150" y2="310" stroke="#333" stroke-width="1.5" />
+  <line x1="150" y1="310" x2="390" y2="310" stroke="#333" stroke-width="1.5" />
+  <line x1="390" y1="310" x2="390" y2="350" stroke="#333" stroke-width="1.5" />
+  <text x="270" y="300" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">has</text>
+  <text x="380" y="340" font-family="Arial" font-size="12" text-anchor="end" fill="#333">*</text>
+  <text x="140" y="280" font-family="Arial" font-size="12" text-anchor="start" fill="#333">1</text>
+  
+  <!-- Group to GroupMembership -->
+  <line x1="250" y1="440" x2="300" y2="440" stroke="#333" stroke-width="1.5" />
+  <text x="275" y="430" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">has</text>
+  <text x="290" y="430" font-family="Arial" font-size="12" text-anchor="end" fill="#333">*</text>
+  <text x="260" y="430" font-family="Arial" font-size="12" text-anchor="start" fill="#333">1</text>
+  
+  <!-- User to BlockList -->
+  <line x1="250" y1="190" x2="480" y2="190" stroke="#333" stroke-width="1.5" />
+  <line x1="480" y1="190" x2="480" y2="400" stroke="#333" stroke-width="1.5" />
+  <line x1="480" y1="400" x2="550" y2="400" stroke="#333" stroke-width="1.5" />
+  <text x="380" y="180" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">manages</text>
+  <text x="540" y="390" font-family="Arial" font-size="12" text-anchor="end" fill="#333">1</text>
+  <text x="260" y="180" font-family="Arial" font-size="12" text-anchor="start" fill="#333">1</text>
+  
+  <!-- Legend -->
+  <rect x="300" y="80" width="200" height="180" rx="5" fill="white" stroke="#ddd" />
+  <text x="400" y="100" font-family="Arial" font-size="14" text-anchor="middle" fill="#333" font-weight="bold">Value Objects</text>
+  
+  <line x1="300" y1="110" x2="500" y2="110" stroke="#ddd" stroke-width="1" />
+  <text x="310" y="130" font-family="Arial" font-size="12" fill="#333">• UserId</text>
+  <text x="310" y="150" font-family="Arial" font-size="12" fill="#333">• MessageId</text>
+  <text x="310" y="170" font-family="Arial" font-size="12" fill="#333">• GroupId</text>
+  <text x="310" y="190" font-family="Arial" font-size="12" fill="#333">• BlockListId</text>
+  <text x="310" y="210" font-family="Arial" font-size="12" fill="#333">• MessageContent</text>
+  
+  <line x1="300" y1="220" x2="500" y2="220" stroke="#ddd" stroke-width="1" />
+  <text x="400" y="240" font-family="Arial" font-size="14" text-anchor="middle" fill="#333" font-weight="bold">Enums</text>
+  <text x="310" y="260" font-family="Arial" font-size="12" fill="#333">• UserStatus</text>
+  <text x="410" y="260" font-family="Arial" font-size="12" fill="#333">• MessageStatus</text>
+</svg>

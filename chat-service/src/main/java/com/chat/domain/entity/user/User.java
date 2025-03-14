@@ -1,68 +1,107 @@
 package com.chat.domain.entity.user;
 
-import com.chat.domain.entity.group.set;
-import com.chat.domain.entity.membership.GroupMemberShip;
+// import java.time.LocalDateTime;
 
+import com.chat.config.kafka.serializer.UserIdDeserializer;
+import com.chat.config.kafka.serializer.UserIdSerializer;
+import com.chat.domain.entity.membership.GroupMemberShip;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-/**
- * The type User.
- */
+
+import java.util.HashSet;
+import java.util.Set;
+
 @Data
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
 public class User {
     @NonNull
-    @Getter
+
+    @JsonSerialize(using = UserIdSerializer.class)
+    @JsonDeserialize(using = UserIdDeserializer.class)
     private UserId id;
     private String userName;
     private String email;
     private String phoneNumber;
+    private String password;
     private UserStatus status;
-    private set<GroupMemberShip> groups;
+    private Set<GroupMemberShip> groups;
 
-    /**
-     * Update profie.
-     *
-     * @param newUsername    the new username
-     * @param newEmail       the new email
-     * @param newPhoneNumber the new phone number
-     */
-    public void UpdateProfie(String newUsername, String newEmail, String newPhoneNumber) {
-        if (newUsername != null) {
-            this.setUserName(newUsername);
+    // Factory method for creating new users
+    public static User create(String userName, String email, String phoneNumber, String password) {
+        return User.builder()
+                .id(UserId.generate())
+                .userName(userName)
+                .email(email)
+                .phoneNumber(phoneNumber)
+                .password(password)
+                .status(UserStatus.OFFLINE)
+                .groups(new HashSet<>())
+                .build();
+    }
+
+    // Domain methods
+    public void updateProfile(String newUsername, String newEmail, String newPhoneNumber) {
+        if (newUsername != null && !newUsername.trim().isEmpty()) {
+            this.userName = newUsername;
         }
-        if (newEmail != null) {
-            this.setUserName(newEmail);
+        if (newEmail != null && !newEmail.trim().isEmpty()) {
+            this.email = newEmail;
         }
-        if (newPhoneNumber != null) {
-            this.setUserName(newPhoneNumber);
+        if (newPhoneNumber != null && !newPhoneNumber.trim().isEmpty()) {
+            this.phoneNumber = newPhoneNumber;
         }
     }
 
-    /**
-     * Block user.
-     *
-     * @param userId the user id
-     */
+    public void joinGroup(GroupMemberShip membership) {
+        if (this.groups == null) {
+            this.groups = new HashSet<>();
+        }
+        this.groups.add(membership);
+    }
+
+    public void leaveGroup(String groupId) {
+        if (this.groups != null) {
+            this.groups.removeIf(membership ->
+                    membership.getGroupId().id().toString().equals(groupId));
+        }
+    }
+
+    // Status management methods
     public void markAsOnline() {
-        this.setStatus(UserStatus.ONLINE);
+        this.status = UserStatus.ONLINE;
     }
 
     public void markAsOffline() {
-        this.setStatus(UserStatus.OFFLINE);
+        this.status = UserStatus.OFFLINE;
     }
 
     public void markAsAway() {
-        this.setStatus(UserStatus.AWAY);
+        this.status = UserStatus.AWAY;
     }
 
-    public void markAsDisturnb() {
-        this.setStatus(UserStatus.DO_NOT_DISTURB);
+    public void markAsDoNotDisturb() {
+        this.status = UserStatus.DO_NOT_DISTURB;
+    }
+
+    // Validation methods
+    public boolean isValidEmail() {
+        return email != null && email.matches("^[A-Za-z0-9+_.-]+@(.+)$");
+    }
+
+    public boolean isValidPhoneNumber() {
+        return phoneNumber != null && phoneNumber.matches("^\\+?[1-9]\\d{1,14}$");
+    }
+
+    public boolean isValidUsername() {
+        return userName != null && userName.length() >= 3 && userName.length() <= 50;
     }
 }
